@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+
+  app:
+    build: ./target/docker/stage
+    networks:
+      - seafight-network
+
+  db:
+    image: postgres:13.4-buster
+    networks:
+      - seafight-network
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_USER: dbuser
+      POSTGRES_DB: dbuser
+
+networks:
+  seafight-network:
+    driver: bridge

@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+
+  db:
+    image: postgres:13.4-buster
+    networks:
+      - seafight-network
+    ports:
+      - "5440:5432"
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS:-123456}
+      POSTGRES_USER: ${DB_USER:-dbuser}
+      POSTGRES_DB: ${DB_NAME:-dbuser}
+    volumes:
+      - ./.postgres:/var/lib/postgresql/data
+
+networks:
+  seafight-network:
+    driver: bridge

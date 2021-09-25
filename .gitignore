@@ -1,0 +1,11 @@
+/target
+/project/target
+/project/project
+/.idea
+/.bsp
+/src/main/scala/fbariy/seafight/Demo.scala
+/.cache
+/.sbt
+/.ivy2
+/.postgres
+/docker-compose.yml

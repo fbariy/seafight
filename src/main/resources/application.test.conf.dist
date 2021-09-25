@@ -1,0 +1,27 @@
+db {
+  driver = "org.postgresql.Driver"
+
+  host = "db"
+  host = ${?DB_HOST}
+
+  port = "5432"
+  port = ${?DB_PORT}
+
+  dbName = "dbuser"
+  dbName = ${?DB_USER}
+
+  url = "jdbc:postgresql://"${db.host}":"${db.port}"/"${db.dbName}
+
+  user = "dbuser"
+  user = ${?DB_USER}
+
+  password = "123456"
+  password  = ${?DB_PASSWORD}
+
+  migration {
+    table = "migrations"
+    locations = [
+      "classpath:migrations"
+    ]
+  }
+}
