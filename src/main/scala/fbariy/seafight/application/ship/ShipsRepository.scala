@@ -4,7 +4,7 @@ import fbariy.seafight.domain.{Cell, Invite, Player}
 
 case class PlayerShips(player: Player, ships: Seq[Cell])
 
-trait ShipsRepo[F[_]] {
+trait ShipsRepository[F[_]] {
   def add(invite: Invite,
           p: Player,
           first: Boolean,

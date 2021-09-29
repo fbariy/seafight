@@ -1,6 +1,6 @@
 package fbariy.seafight.application
 
-import fbariy.seafight.domain.Cell
+import fbariy.seafight.domain.{Cell, Player}
 
 object errors {
   sealed trait AppError
@@ -16,4 +16,6 @@ object errors {
 
   case class NotCorrectShipsError(ships: Seq[Cell]) extends AppError
   case object SamePlayersError                      extends AppError
+  case class PlayerCannotMakeMoveError(p: Player)   extends AppError
+  case class GameOverError(winner: Player)          extends AppError
 }

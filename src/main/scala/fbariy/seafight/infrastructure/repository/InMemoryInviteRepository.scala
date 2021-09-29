@@ -2,14 +2,14 @@ package fbariy.seafight.infrastructure.repository
 
 import cats.Applicative
 import cats.implicits._
-import fbariy.seafight.application.invite.InviteRepo
+import fbariy.seafight.application.invite.InviteRepository
 import fbariy.seafight.domain.{Invite, Player}
 
 import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
-class InMemoryInviteRepo[F[_]](implicit val A: Applicative[F])
-    extends InviteRepo[F] {
+class InMemoryInviteRepository[F[_]](implicit val A: Applicative[F])
+    extends InviteRepository[F] {
   private val invites: ListBuffer[Invite] = ListBuffer.empty
 
   override def add(invite: Invite): F[Invite] = {

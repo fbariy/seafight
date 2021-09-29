@@ -6,14 +6,14 @@ import cats.data.ValidatedNec
 import cats.effect.Sync
 import cats.implicits._
 import fbariy.seafight.application.errors._
-import fbariy.seafight.application.game.GameRepo
+import fbariy.seafight.application.game.GameRepository
 import fbariy.seafight.domain.{Cell, Game}
 import fbariy.seafight.infrastructure.PlayerWithInvite
 
 import java.util.UUID
 
-class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepo[F],
-                                  gameRepo: GameRepo[F],
+class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepository[F],
+                                  gameRepo: GameRepository[F],
                                   validator: AddShipsValidator) {
   def handle(
       ships: Seq[Cell],
@@ -21,6 +21,7 @@ class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepo[F],
     import invited._
 
     //todo: ошибка, игра по такому инвайту уже существует
+    //todo: изолировать вызов валидации с помощью Sync
     for {
       validated <- validator.correctedShips(ships) match {
         case Valid(_) =>

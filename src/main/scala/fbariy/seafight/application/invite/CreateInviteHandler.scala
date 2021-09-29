@@ -10,11 +10,12 @@ import fbariy.seafight.domain.Invite
 import java.util.UUID
 
 class CreateInviteHandler[F[_]: Sync](validator: CreateInviteValidator,
-                                      inviteRepo: InviteRepo[F]) {
+                                      inviteRepo: InviteRepository[F]) {
   def handle(input: CreateInviteInput)
     : F[ValidatedNec[SamePlayersError.type, InviteOutput]] = {
     import input._
 
+    //todo: изолировать вызов валидации с помощью Sync
     validator.playersAreNotSame(player1, player2) match {
       case Valid(_) =>
         for {

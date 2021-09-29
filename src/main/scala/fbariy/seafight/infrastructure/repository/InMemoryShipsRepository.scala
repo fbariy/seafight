@@ -2,14 +2,14 @@ package fbariy.seafight.infrastructure.repository
 
 import cats.Applicative
 import cats.implicits._
-import fbariy.seafight.application.ship.{PlayerShips, ShipsRepo}
+import fbariy.seafight.application.ship.{PlayerShips, ShipsRepository}
 import fbariy.seafight.domain.{Cell, Invite, Player}
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters.ConcurrentMapHasAsScala
 
-class InMemoryShipsRepo[F[_]: Applicative] extends ShipsRepo[F] {
+class InMemoryShipsRepository[F[_]: Applicative] extends ShipsRepository[F] {
   private val preparation =
     new ConcurrentHashMap[UUID, (Option[PlayerShips], Option[PlayerShips])].asScala
 

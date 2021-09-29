@@ -10,7 +10,7 @@ import java.util.UUID
 class CanMakeMoveSuite extends AppSuite {
   test("Can't make a move on a not created game") {
     for {
-      (validated, response) <- appClient.canMakeMove(UUID.randomUUID(),
+      validated -> response <- appClient.canMakeMove(UUID.randomUUID(),
                                                      Player("HellLighT"))
     } yield {
       assertEquals(clue(response.status), clue(NotFound))
@@ -25,7 +25,7 @@ class CanMakeMoveSuite extends AppSuite {
 
   test("Second player can't make a move on a new game") {
     for {
-      ex(invite) -> _ <- appClient.createInvite(
+      ex.suc(invite) -> _ <- appClient.createInvite(
         CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
 
       _ <- (
@@ -33,14 +33,14 @@ class CanMakeMoveSuite extends AppSuite {
         appClient.addShips(invite.id, Player("VooDooSh"))(Seq.empty)
       ).tupled
 
-      ex(canMakeMove) -> _ <- appClient.canMakeMove(invite.id, invite.player2)
+      ex.suc(canMakeMove) -> _ <- appClient.canMakeMove(invite.id, invite.player2)
 
     } yield assert(!canMakeMove)
   }
 
   test("First player make a move on a new game") {
     for {
-      ex(invite) -> _ <- appClient.createInvite(
+      ex.suc(invite) -> _ <- appClient.createInvite(
         CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
 
       _ <- (
@@ -48,7 +48,7 @@ class CanMakeMoveSuite extends AppSuite {
         appClient.addShips(invite.id, Player("VooDooSh"))(Seq.empty)
       ).tupled
 
-      ex(canMakeMove) -> _ <- appClient.canMakeMove(invite.id, invite.player1)
+      ex.suc(canMakeMove) -> _ <- appClient.canMakeMove(invite.id, invite.player1)
 
     } yield assert(canMakeMove)
   }
@@ -56,7 +56,7 @@ class CanMakeMoveSuite extends AppSuite {
   test("Player can make a move if the last move was another player".ignore) {
     //todo: сделать ход первым игроком и убедиться что второй игрок может сделать ход
     for {
-      ex(invite) -> _ <- appClient.createInvite(
+      ex.suc(invite) -> _ <- appClient.createInvite(
         CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
 
       _ <- (
@@ -64,7 +64,7 @@ class CanMakeMoveSuite extends AppSuite {
         appClient.addShips(invite.id, Player("VooDooSh"))(Seq.empty)
       ).tupled
 
-      ex(canMakeMove) -> _ <- appClient.canMakeMove(invite.id, invite.player1)
+      ex.suc(canMakeMove) -> _ <- appClient.canMakeMove(invite.id, invite.player1)
 
     } yield assert(canMakeMove)
   }

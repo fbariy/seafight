@@ -9,12 +9,12 @@ import doobie.implicits._
 import doobie.util.fragment.Fragment
 import doobie.util.fragments.whereAndOpt
 import doobie.util.query.Query0
-import fbariy.seafight.application.invite.InviteRepo
+import fbariy.seafight.application.invite.InviteRepository
 
 import java.util.UUID
 
-class DoobieInviteRepo[F[_]: Bracket[*[_], Throwable]](val xa: Transactor[F])
-    extends InviteRepo[F] {
+class DoobieInviteRepository[F[_]: Bracket[*[_], Throwable]](val xa: Transactor[F])
+    extends InviteRepository[F] {
 
   override def add(invite: Invite): F[Invite] =
     InviteSql.insert(invite).run.map(_ => invite).transact(xa)

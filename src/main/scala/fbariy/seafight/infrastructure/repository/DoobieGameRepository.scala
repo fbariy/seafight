@@ -1,8 +1,8 @@
 package fbariy.seafight.infrastructure.repository
 
 import cats.effect.Bracket
-import fbariy.seafight.application.game.GameRepo
-import fbariy.seafight.domain.{Game, GameWithPlayers, Player}
+import fbariy.seafight.application.game.GameRepository
+import fbariy.seafight.domain.{Game, GameWithPlayers, Player, Turn}
 import doobie.postgres.implicits._
 import doobie.implicits._
 import doobie.util.fragment.Fragment
@@ -14,8 +14,9 @@ import fbariy.seafight.infrastructure.mapping._
 
 import java.util.UUID
 
-class DoobieGameRepo[F[_]: Bracket[*[_], Throwable]](transactor: Transactor[F])
-    extends GameRepo[F] {
+class DoobieGameRepository[F[_]: Bracket[*[_], Throwable]](
+    transactor: Transactor[F])
+    extends GameRepository[F] {
 
   override def find(id: UUID): F[Option[GameWithPlayers]] =
     GameSql.find(Some(id), None).option.transact(transactor)
@@ -26,6 +27,12 @@ class DoobieGameRepo[F[_]: Bracket[*[_], Throwable]](transactor: Transactor[F])
 
   override def add(game: Game): F[Game] =
     GameSql.insert(game).run.map(_ => game).transact(transactor)
+
+  override def updateTurns(id: UUID, turns: Seq[Turn]): F[Game] =
+    GameSql
+      .updateTurns(id, turns)
+      .withUniqueGeneratedKeys[Game]("id", "p1_ships", "p2_ships", "turns")
+      .transact(transactor)
 }
 
 private object GameSql {
@@ -50,4 +57,7 @@ private object GameSql {
           values 
           (${game.id}, ${game.id}, ${game.p1Ships}, ${game.p2Ships}, ${game.turns})
     """.update
+
+  def updateTurns(id: UUID, turns: Seq[Turn]): Update0 =
+    sql"update game set turns = $turns where id = $id".update
 }

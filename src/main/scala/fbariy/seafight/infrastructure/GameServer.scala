@@ -1,5 +1,6 @@
 package fbariy.seafight.infrastructure
 
+import cats.effect.concurrent.Semaphore
 import cats.effect.{
   Blocker,
   ConcurrentEffect,
@@ -9,7 +10,11 @@ import cats.effect.{
   Timer
 }
 import cats.implicits._
-import fbariy.seafight.application.game.CanMakeMoveHandler
+import fbariy.seafight.application.game.{
+  CanMakeMoveHandler,
+  MoveHandler,
+  MoveValidator
+}
 import fbariy.seafight.application.invite.{
   CreateInviteHandler,
   CreateInviteValidator
@@ -49,17 +54,22 @@ object GameServer {
       transactor <- DBConfig.transactor(cfg.db, global, blocker)
 
       preparationHdlr = new AddShipsHandler[F](
-        new InMemoryShipsRepo[F],
-        new DoobieGameRepo[F](transactor),
+        new InMemoryShipsRepository[F],
+        new DoobieGameRepository[F](transactor),
         new AddShipsValidator
       )
       createInviteHdlr = new CreateInviteHandler[F](
         new CreateInviteValidator,
-        new DoobieInviteRepo[F](transactor)
+        new DoobieInviteRepository[F](transactor)
       )
       canMoveHdlr = new CanMakeMoveHandler
-      gameRepo    = new DoobieGameRepo[F](transactor)
-      inviteRepo  = new DoobieInviteRepo[F](transactor)
+      gameRepo    = new DoobieGameRepository[F](transactor)
+      inviteRepo  = new DoobieInviteRepository[F](transactor)
+
+      moveValidator = new MoveValidator(canMoveHdlr)
+
+      semaphore <- Resource.eval(Semaphore[F](1))
+      moveHdlr = new MoveHandler(gameRepo, moveValidator, semaphore)
 
       preparationEndpoints = new PreparationEndpoints[F]
       gameEndpoints        = new GameEndpoints[F]
@@ -71,8 +81,9 @@ object GameServer {
             withInvite(inviteRepo)(
               preparationEndpoints.addShips(preparationHdlr))
         ),
-        "api/v1/game" -> withGame(gameRepo)(
-          gameEndpoints.canMakeMove(canMoveHdlr))
+        "api/v1/game" -> (withGame(gameRepo)(
+          gameEndpoints.canMakeMove(canMoveHdlr)) <+>
+          withGame(gameRepo)(gameEndpoints.move(moveHdlr)))
       )
 
       finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(

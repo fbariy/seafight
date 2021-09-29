@@ -1,11 +1,12 @@
 package fbariy.seafight.application.game
 
-import fbariy.seafight.domain.{Game, GameWithPlayers, Player}
+import fbariy.seafight.domain.{Game, GameWithPlayers, Player, Turn}
 
 import java.util.UUID
 
-trait GameRepo[F[_]] {
+trait GameRepository[F[_]] {
   def find(id: UUID): F[Option[GameWithPlayers]]
   def findByIdAndPlayer(id: UUID, p: Player): F[Option[GameWithPlayers]]
   def add(game: Game): F[Game]
+  def updateTurns(id: UUID, turns: Seq[Turn]): F[Game]
 }

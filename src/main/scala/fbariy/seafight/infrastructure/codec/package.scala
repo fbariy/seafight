@@ -5,6 +5,7 @@ import cats.data.{NonEmptyChain, ValidatedNec}
 import cats.implicits._
 import fbariy.seafight.application.AppErrorOutput
 import fbariy.seafight.application.errors._
+import fbariy.seafight.application.game.{GameOutput, TurnOutput}
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.application.ship.AddShipsOutput
 import fbariy.seafight.domain._
@@ -33,15 +34,15 @@ package object codec {
           case I => "I"
         })),
         ("digit", Json.fromInt(obj.digit match {
-          case One   => 1
-          case Two   => 2
-          case Three => 3
-          case Four  => 4
-          case Five  => 5
-          case Six   => 6
-          case Seven => 7
-          case Eight => 8
-          case Nine  => 9
+          case `1`   => 1
+          case `2`   => 2
+          case `3` => 3
+          case `4`  => 4
+          case `5`  => 5
+          case `6`   => 6
+          case `7` => 7
+          case `8` => 8
+          case `9`  => 9
         }))
     )
   implicit val cellDecoder: Decoder[Cell] =
@@ -67,22 +68,22 @@ package object codec {
                 List()))
         }
         digit <- rawDigit match {
-          case 1 => Right(One)
-          case 2 => Right(Two)
-          case 3 => Right(Three)
-          case 4 => Right(Four)
-          case 5 => Right(Five)
-          case 6 => Right(Six)
-          case 7 => Right(Seven)
-          case 8 => Right(Eight)
-          case 9 => Right(Nine)
+          case 1 => Right(`1`)
+          case 2 => Right(`2`)
+          case 3 => Right(`3`)
+          case 4 => Right(`4`)
+          case 5 => Right(`5`)
+          case 6 => Right(`6`)
+          case 7 => Right(`7`)
+          case 8 => Right(`8`)
+          case 9 => Right(`9`)
           case _ =>
             Left(
               DecodingFailure(
                 s"Digit must be one of the 1-9 value, given $rawDigit",
                 List()))
         }
-      } yield Cell(digit, symbol)
+      } yield Cell(symbol, digit)
   implicit val turnDecoder: Decoder[Turn]                       = deriveDecoder
   implicit val turnEncoder: Encoder[Turn]                       = deriveEncoder
   implicit val gameDecoder: Decoder[Game]                       = deriveDecoder
@@ -98,6 +99,10 @@ package object codec {
   implicit val inviteOutputDecoder: Decoder[InviteOutput]     = deriveDecoder
   implicit val addShipsOutputEncoder: Encoder[AddShipsOutput] = deriveEncoder
   implicit val addShipsOutputDecoder: Decoder[AddShipsOutput] = deriveDecoder
+  implicit val turnOutputEncoder: Encoder[TurnOutput]         = deriveEncoder
+  implicit val turnOutputDecoder: Decoder[TurnOutput]         = deriveDecoder
+  implicit val gameOutputEncoder: Encoder[GameOutput]         = deriveEncoder
+  implicit val gameOutputDecoder: Decoder[GameOutput]         = deriveDecoder
 
   implicit val appErrorOutputDecoder: Decoder[AppErrorOutput] = deriveDecoder
   implicit val appErrorOutputEncoder: Encoder[AppErrorOutput] = deriveEncoder
@@ -111,6 +116,10 @@ package object codec {
       AppErrorOutput("NOT_CORRECT_SHIPS", "Не корректное размещение кораблей")
     case SamePlayersError =>
       AppErrorOutput("PLAYERS_ARE_SAME", "Игроки должны быть разными")
+    case PlayerCannotMakeMoveError(_) =>
+      AppErrorOutput("PLAYER_CANNOT_MAKE_MOVE", "Сейчас не ваш ход")
+    case GameOverError(winner) =>
+      AppErrorOutput("GAME_OVER", s"Игра окончена. Победитель: $winner")
   }
 
   private val authErrorToJson: PartialFunction[AuthError, AppErrorOutput] = {
@@ -150,7 +159,7 @@ package object codec {
     (c: HCursor) =>
       (c.get[String]("type"), c.get[Json]("errors")).tupled match {
         case Left(_) => Decoder[A].apply(c).map(_.valid.toValidatedNec)
-        case Right((_, errors)) =>
+        case Right(_ -> errors) =>
           Decoder[NonEmptyChain[E]].decodeJson(errors).map(_.invalid)
     }
 }

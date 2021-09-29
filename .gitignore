@@ -4,6 +4,7 @@
 /.idea
 /.bsp
 /src/main/scala/fbariy/seafight/Demo.scala
+/src/test/scala/DemoSuite.scala
 /.cache
 /.sbt
 /.ivy2

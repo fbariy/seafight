@@ -5,6 +5,7 @@ import cats.data.ValidatedNec
 import cats.effect.{Bracket, IO, Sync}
 import cats.implicits._
 import fbariy.seafight.application.AppErrorOutput
+import fbariy.seafight.application.game.GameOutput
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.application.ship.AddShipsOutput
 import fbariy.seafight.domain.{Cell, Player}
@@ -59,9 +60,8 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
           .value
           .map {
             case Left(failure)    => throw failure
-            case Right(validated) => validated
+            case Right(validated) => validated -> response
           }
-          .map { _ -> response }
       }
 
   def createInvite(input: CreateInviteInput)
@@ -78,9 +78,8 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
           .value
           .map {
             case Left(failure)    => throw failure
-            case Right(validated) => validated
+            case Right(validated) => validated -> response
           }
-          .map { _ -> response }
       }
 
   def addShips(inviteId: UUID, p: Player)(ships: Seq[Cell])
@@ -100,8 +99,29 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
           .value
           .map {
             case Left(failure)    => throw failure
-            case Right(validated) => validated
+            case Right(validated) => validated -> response
           }
-          .map { _ -> response }
+      }
+
+  def move(gameId: UUID, p: Player)(
+      kick: Cell): F[(ValidatedNec[AppErrorOutput, GameOutput], Response[F])] =
+    httpClient
+      .run(
+        Request[F](
+          POST,
+          baseUri / "api" / "v1" / "game" / "move",
+          body = EntityEncoder[F, Cell].toEntity(kick).body,
+          headers = Headers.of(Header("GameId", gameId.toString),
+                               Header("Player", p.name))
+        )
+      )
+      .use { response =>
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, GameOutput]]
+          .decode(response, strict = true)
+          .value
+          .map {
+            case Left(failure)    => throw failure
+            case Right(validated) => validated -> response
+          }
       }
 }

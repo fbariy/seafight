@@ -5,9 +5,9 @@ import cats.data.Validated.Invalid
 import cats.data.{Kleisli, OptionT}
 import cats.implicits._
 import fbariy.seafight.application.errors._
-import fbariy.seafight.application.game.GameRepo
-import fbariy.seafight.application.invite.InviteRepo
-import fbariy.seafight.domain.{GameWithPlayers, Invite, Player}
+import fbariy.seafight.application.game.GameRepository
+import fbariy.seafight.application.invite.InviteRepository
+import fbariy.seafight.domain.{GameWithPlayers, Invite, Player, Turn}
 import fbariy.seafight.infrastructure.codec._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
@@ -19,18 +19,24 @@ import java.util.UUID
 import scala.util.Try
 
 package object endpoint {
-  def withGame[F[_]: Monad](gameRepo: GameRepo[F])(
+  def withGame[F[_]: Monad](gameRepo: GameRepository[F])(
       routes: AuthedRoutes[PlayerWithGame, F]): HttpRoutes[F] =
     new GameAuth[F](gameRepo).middleware(routes)
 
-  def withInvite[F[_]: Monad](inviteRepo: InviteRepo[F])(
+  def withInvite[F[_]: Monad](inviteRepo: InviteRepository[F])(
       routes: AuthedRoutes[PlayerWithInvite, F]
   ): HttpRoutes[F] =
     new InviteAuth[F](inviteRepo).middleware(routes)
 }
 
 case class PlayerWithInvite(p: Player, invite: Invite)
-case class PlayerWithGame(p: Player, game: GameWithPlayers)
+case class PlayerWithGame(p: Player,
+                          opp: Player,
+                          isFirstPlayer: Boolean,
+                          game: GameWithPlayers) {
+  def updateTurns(newTurns: Seq[Turn]): PlayerWithGame =
+    this.copy(game = game.copy(turns = newTurns))
+}
 
 abstract class AbstractAuth[F[_]: Monad, V, R] {
   protected def validate(req: Request[F]): Either[AuthError, V]
@@ -79,7 +85,7 @@ abstract class AbstractAuth[F[_]: Monad, V, R] {
     AuthMiddleware(auth, onFailure)
 }
 
-private class GameAuth[F[_]: Monad](gameRepo: GameRepo[F])
+private class GameAuth[F[_]: Monad](gameRepo: GameRepository[F])
     extends AbstractAuth[F, (UUID, Player), PlayerWithGame] {
 
   override protected def validate(
@@ -102,7 +108,14 @@ private class GameAuth[F[_]: Monad](gameRepo: GameRepo[F])
       p: Player): F[Either[NotFoundGameError.type, PlayerWithGame]] =
     gameRepo
       .findByIdAndPlayer(id, p)
-      .map(_.map(PlayerWithGame(p, _)).toRight(NotFoundGameError))
+      .map(_.map(game => {
+        val isFirstPlayer = game.p1 == p
+
+        PlayerWithGame(p,
+                       if (isFirstPlayer) game.p2 else game.p1,
+                       isFirstPlayer,
+                       game)
+      }).toRight(NotFoundGameError))
 
   private def getGameId(
       req: Request[F]): Either[MissingGameIdError.type, String] =
@@ -117,7 +130,7 @@ private class GameAuth[F[_]: Monad](gameRepo: GameRepo[F])
     getHeaderValue(req, "Player")(MissingPlayerError).map(Player)
 }
 
-private class InviteAuth[F[_]: Monad](inviteRepo: InviteRepo[F])
+private class InviteAuth[F[_]: Monad](inviteRepo: InviteRepository[F])
     extends AbstractAuth[F, (UUID, Player), PlayerWithInvite] {
   override protected def validate(
       req: Request[F]): Either[AuthError, (UUID, Player)] =

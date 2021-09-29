@@ -1,15 +1,17 @@
 package fbariy.seafight.domain
 
+import scala.language.postfixOps
+
 sealed trait Digit
-case object One extends Digit
-case object Two extends Digit
-case object Three extends Digit
-case object Four extends Digit
-case object Five extends Digit
-case object Six extends Digit
-case object Seven extends Digit
-case object Eight extends Digit
-case object Nine extends Digit
+case object `1` extends Digit
+case object `2` extends Digit
+case object `3` extends Digit
+case object `4` extends Digit
+case object `5` extends Digit
+case object `6` extends Digit
+case object `7` extends Digit
+case object `8` extends Digit
+case object `9` extends Digit
 
 sealed trait Symbol
 case object A extends Symbol
@@ -22,4 +24,9 @@ case object G extends Symbol
 case object H extends Symbol
 case object I extends Symbol
 
-case class Cell(digit: Digit, symbol: Symbol)
+case class Cell(symbol: Symbol, digit: Digit)
+object Cell {
+  implicit class CellOps(symbol: Symbol) {
+    def \(digit: Digit): Cell = Cell(symbol, digit)
+  }
+}
