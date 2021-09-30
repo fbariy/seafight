@@ -1,7 +1,6 @@
 package fbariy.seafight.infrastructure
 
 import cats.Monad
-import cats.data.Validated.Invalid
 import cats.data.{Kleisli, OptionT}
 import cats.implicits._
 import fbariy.seafight.application.errors._
@@ -20,7 +19,7 @@ import scala.util.Try
 
 package object endpoint {
   def withGame[F[_]: Monad](gameRepo: GameRepository[F])(
-      routes: AuthedRoutes[PlayerWithGame, F]): HttpRoutes[F] =
+      routes: AuthedRoutes[F[PlayerWithGame], F]): HttpRoutes[F] =
     new GameAuth[F](gameRepo).middleware(routes)
 
   def withInvite[F[_]: Monad](inviteRepo: InviteRepository[F])(
@@ -86,7 +85,7 @@ abstract class AbstractAuth[F[_]: Monad, V, R] {
 }
 
 private class GameAuth[F[_]: Monad](gameRepo: GameRepository[F])
-    extends AbstractAuth[F, (UUID, Player), PlayerWithGame] {
+    extends AbstractAuth[F, (UUID, Player), F[PlayerWithGame]] {
 
   override protected def validate(
       req: Request[F]): Either[AuthError, (UUID, Player)] =
@@ -96,26 +95,35 @@ private class GameAuth[F[_]: Monad](gameRepo: GameRepository[F])
       player <- getPlayer(req)
     } yield (id, player)
 
+//  override protected def getValue(
+//      validateRes: (UUID, Player)): F[Either[AuthError, F[PlayerWithGame]]] =
+//    getGame(validateRes._1, validateRes._2).map {
+//      case Left(e)      => Either.left[AuthError, PlayerWithGame](e)
+//      case r @ Right(_) => r
+//    }
+
   override protected def getValue(
-      validateRes: (UUID, Player)): F[Either[AuthError, PlayerWithGame]] =
-    getGame(validateRes._1, validateRes._2).map {
-      case Left(e)      => Either.left[AuthError, PlayerWithGame](e)
-      case r @ Right(_) => r
-    }
+      validateRes: (UUID, Player)): F[Either[AuthError, F[PlayerWithGame]]] = {
+    val gameId -> p = validateRes
+    val findGame    = gameRepo.findByIdAndPlayer(gameId, p)
 
-  private def getGame(
-      id: UUID,
-      p: Player): F[Either[NotFoundGameError.type, PlayerWithGame]] =
-    gameRepo
-      .findByIdAndPlayer(id, p)
-      .map(_.map(game => {
-        val isFirstPlayer = game.p1 == p
+    findGame.map(
+      maybeGame =>
+        if (maybeGame.isEmpty) Either.left(NotFoundGameError)
+        //игры не удаляются из приложения, поэтому допускаем её существование
+        //во время выполнения F[PlayerWithGame]
+        else Either.right(findGame.map(_.get).map(gameToPlayerContext(_, p))))
+  }
 
-        PlayerWithGame(p,
-                       if (isFirstPlayer) game.p2 else game.p1,
-                       isFirstPlayer,
-                       game)
-      }).toRight(NotFoundGameError))
+  private def gameToPlayerContext(game: GameWithPlayers,
+                                  p: Player): PlayerWithGame = {
+    val isFirstPlayer = game.p1 == p
+
+    PlayerWithGame(p,
+                   if (isFirstPlayer) game.p2 else game.p1,
+                   isFirstPlayer,
+                   game)
+  }
 
   private def getGameId(
       req: Request[F]): Either[MissingGameIdError.type, String] =

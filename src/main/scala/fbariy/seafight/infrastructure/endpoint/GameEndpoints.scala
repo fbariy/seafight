@@ -13,19 +13,22 @@ import cats.implicits._
 
 class GameEndpoints[F[_]: Sync] extends Http4sDsl[F] {
   def canMakeMove(
-      handler: CanMakeMoveHandler): AuthedRoutes[PlayerWithGame, F] =
-    AuthedRoutes.of[PlayerWithGame, F] {
+      handler: CanMakeMoveHandler[F]): AuthedRoutes[F[PlayerWithGame], F] =
+    AuthedRoutes.of[F[PlayerWithGame], F] {
       case GET -> Root / "can-make-move" as played =>
-        Ok(handler.handle(played))
+        for {
+          canMakeMove <- handler.handle(played)
+          response    <- Ok(canMakeMove)
+        } yield response
     }
 
-  def move(handler: MoveHandler[F]): AuthedRoutes[PlayerWithGame, F] =
-    AuthedRoutes.of[PlayerWithGame, F] {
+  def move(handler: MoveHandler[F]): AuthedRoutes[F[PlayerWithGame], F] =
+    AuthedRoutes.of[F[PlayerWithGame], F] {
       case authReq @ POST -> Root / "move" as played =>
         for {
           kick      <- authReq.req.as[Cell]
           validated <- handler.handle(played, kick)
-          response <- Ok(validated)
+          response  <- Ok(validated)
         } yield response
     }
 }

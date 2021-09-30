@@ -62,11 +62,10 @@ object GameServer {
         new CreateInviteValidator,
         new DoobieInviteRepository[F](transactor)
       )
-      canMoveHdlr = new CanMakeMoveHandler
-      gameRepo    = new DoobieGameRepository[F](transactor)
-      inviteRepo  = new DoobieInviteRepository[F](transactor)
-
-      moveValidator = new MoveValidator(canMoveHdlr)
+      moveValidator = new MoveValidator
+      canMoveHdlr   = new CanMakeMoveHandler[F](moveValidator)
+      gameRepo      = new DoobieGameRepository[F](transactor)
+      inviteRepo    = new DoobieInviteRepository[F](transactor)
 
       semaphore <- Resource.eval(Semaphore[F](1))
       moveHdlr = new MoveHandler(gameRepo, moveValidator, semaphore)

@@ -10,11 +10,19 @@ import fbariy.seafight.application.errors.{
 import fbariy.seafight.domain.{Cell, GameWithPlayers}
 import fbariy.seafight.infrastructure.PlayerWithGame
 
-class MoveValidator(canMakeMoveHandler: CanMakeMoveHandler) {
-  def canMakeMove(played: PlayerWithGame): ValidatedNec[AppError, Unit] =
-    if (canMakeMoveHandler.handle(played))
-      ().validNec[PlayerCannotMakeMoveError]
+class MoveValidator {
+  def canMakeMove(played: PlayerWithGame): ValidatedNec[AppError, Unit] = {
+    val canMakeMove = played match {
+      case PlayerWithGame(p, _, _, GameWithPlayers(_, _, _, turns, p1, _)) =>
+        turns.sortBy(-_.serial).headOption match {
+          case Some(turn) => turn.p != p
+          case None       => p1 == p
+        }
+    }
+
+    if (canMakeMove) ().validNec[PlayerCannotMakeMoveError]
     else PlayerCannotMakeMoveError(played.p).invalidNec[Unit]
+  }
 
   def gameIsNotOver(game: GameWithPlayers): ValidatedNec[AppError, Unit] =
     if (checkGameOver(game.p2Ships, game.getPlayerTurns(game.p1).map(_.kick)))

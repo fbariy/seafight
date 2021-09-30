@@ -1,14 +1,14 @@
 package fbariy.seafight.application.game
 
+import cats.effect.Sync
+import cats.implicits._
 import fbariy.seafight.infrastructure.PlayerWithGame
 
-class CanMakeMoveHandler {
-  def handle(played: PlayerWithGame): Boolean = {
-    import played._
-
-    game.turns.sortBy(-_.serial).headOption match {
-      case Some(turn) => turn.p != p
-      case None       => game.p1 == p
-    }
+class CanMakeMoveHandler[F[_]: Sync](validator: MoveValidator) {
+  def handle(played: F[PlayerWithGame]): F[Boolean] = {
+    for {
+      playerWithGame <- played
+      validated      <- Sync[F].delay(validator.canMakeMove(playerWithGame))
+    } yield validated.isValid
   }
 }
