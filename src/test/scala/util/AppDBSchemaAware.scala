@@ -24,9 +24,8 @@ trait AppDBSchemaAware extends CatsEffectSuite {
   }
 
   override def afterEach(context: AfterEach): Unit = {
-    DBMigrations.clean[IO](dbConfig)
+    DBMigrations.clean[IO](dbConfig).unsafeRunSync()
 
-    //todo: этот код не вызывается
     super.afterEach(context)
   }
 }
