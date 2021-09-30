@@ -14,29 +14,33 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
                                     semaphore: Semaphore[F]) {
   def handle(played: PlayerWithGame,
              kick: Cell): F[ValidatedNec[AppError, GameOutput]] = {
-    import played._
-
-    semaphore.withPermit(
+    def makeMove: F[ValidatedNec[AppError, GameOutput]] =
       for {
+        //todo: хардкод, вместо PlayerWithGame, принимать F[PlayerWithGame] или F[ValidatedNec[AppError, PlayerWithGame]]
+        actualGame <- gameRepository.find(played.game.id)
+        actualPlayed = played.copy(game = actualGame.get)
+
         validationRes <- Sync[F].delay(
-          validator.canMakeMove(played) |+| validator.gameIsNotOver(game))
+          validator.canMakeMove(actualPlayed) |+| validator.gameIsNotOver(
+            actualPlayed.game))
         validated <- validationRes match {
           case Valid(_) =>
-            val newTurnSerial = game.turns
+            val newTurnSerial = actualPlayed.game.turns
               .maxByOption(_.serial)
               .map(_.serial + 1)
               .getOrElse(1)
 
-            val newTurns = Turn(p, kick, newTurnSerial) +: game.turns
+            val newTurns = Turn(actualPlayed.p, kick, newTurnSerial) +: actualPlayed.game.turns
 
             gameRepository
-              .updateTurns(game.id, newTurns)
+              .updateTurns(actualPlayed.game.id, newTurns)
               .map { _ =>
                 GameOutput(played.updateTurns(newTurns)).validNec[AppError]
               }
           case i @ Invalid(_) => i.pure[F]
         }
       } yield validated
-    )
+
+    semaphore withPermit makeMove
   }
 }

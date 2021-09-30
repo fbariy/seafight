@@ -44,7 +44,7 @@ class MoveSuite extends AppSuite {
   }
 
   fixtures.newGame.test(
-    "When trying to make moves concurrently by the player, only one will be successful".ignore) {
+    "When trying to make moves concurrently by the player, only one will be successful") {
     invite =>
       for {
         seqValidated <- Seq(
