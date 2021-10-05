@@ -1,8 +1,7 @@
-import cats.data.Validated.{Invalid, Valid}
-import cats.implicits._
-import fbariy.seafight.application.invite.CreateInviteInput
-import fbariy.seafight.domain._
 import fbariy.seafight.domain.Cell.CellOps
+import fbariy.seafight.domain.Digit._
+import fbariy.seafight.domain.Symbol._
+import fbariy.seafight.domain._
 import org.http4s.Status.NotFound
 import util.AppSuite
 

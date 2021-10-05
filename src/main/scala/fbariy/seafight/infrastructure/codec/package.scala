@@ -19,71 +19,8 @@ package object codec {
   implicit val playerEncoder: Encoder[Player] =
     (a: Player) => Json.fromString(a.name)
 
-  implicit val cellEncoder: Encoder[Cell] =
-    (obj: Cell) =>
-      Json.obj(
-        ("symbol", Json.fromString(obj.symbol match {
-          case A => "A"
-          case B => "B"
-          case C => "C"
-          case D => "D"
-          case E => "E"
-          case F => "F"
-          case G => "G"
-          case H => "H"
-          case I => "I"
-        })),
-        ("digit", Json.fromInt(obj.digit match {
-          case `1`   => 1
-          case `2`   => 2
-          case `3` => 3
-          case `4`  => 4
-          case `5`  => 5
-          case `6`   => 6
-          case `7` => 7
-          case `8` => 8
-          case `9`  => 9
-        }))
-    )
-  implicit val cellDecoder: Decoder[Cell] =
-    (c: HCursor) =>
-      for {
-        rawSymbol <- c.get[String]("symbol")
-        rawDigit  <- c.get[Int]("digit")
-
-        symbol <- rawSymbol match {
-          case "A" => Right(A)
-          case "B" => Right(B)
-          case "C" => Right(C)
-          case "D" => Right(D)
-          case "E" => Right(E)
-          case "F" => Right(F)
-          case "G" => Right(G)
-          case "H" => Right(H)
-          case "I" => Right(I)
-          case _ =>
-            Left(
-              DecodingFailure(
-                s"Symbol must be one of the A-I value, given $rawSymbol",
-                List()))
-        }
-        digit <- rawDigit match {
-          case 1 => Right(`1`)
-          case 2 => Right(`2`)
-          case 3 => Right(`3`)
-          case 4 => Right(`4`)
-          case 5 => Right(`5`)
-          case 6 => Right(`6`)
-          case 7 => Right(`7`)
-          case 8 => Right(`8`)
-          case 9 => Right(`9`)
-          case _ =>
-            Left(
-              DecodingFailure(
-                s"Digit must be one of the 1-9 value, given $rawDigit",
-                List()))
-        }
-      } yield Cell(symbol, digit)
+  implicit val cellDecoder: Decoder[Cell]                       = deriveDecoder
+  implicit val cellEncoder: Encoder[Cell]                       = deriveEncoder
   implicit val turnDecoder: Decoder[Turn]                       = deriveDecoder
   implicit val turnEncoder: Encoder[Turn]                       = deriveEncoder
   implicit val gameDecoder: Decoder[Game]                       = deriveDecoder

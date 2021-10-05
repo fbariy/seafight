@@ -2,6 +2,8 @@ import fbariy.seafight.domain._
 import util.AppSuite
 import cats.implicits._
 import fbariy.seafight.application.game.TurnOutput
+import fbariy.seafight.domain.Digit._
+import fbariy.seafight.domain.Symbol._
 import fbariy.seafight.domain.Cell.CellOps
 
 class MoveSuite extends AppSuite {
@@ -13,7 +15,7 @@ class MoveSuite extends AppSuite {
       } yield assert(err.code == "PLAYER_CANNOT_MAKE_MOVE")
   }
 
-  fixtures.newGame.test("Players can make moves alternately") { invite =>
+  fixtures.newGame.test("Players must to make moves alternately") { invite =>
     for {
       _ <- appClient.move(invite.id, invite.player1)(A \ `1`)
       ex.suc(gameAfterSecondMove) -> _ <- appClient.move(
@@ -40,7 +42,7 @@ class MoveSuite extends AppSuite {
 
   fixtures.newGame.test("Player can't a move on game that over".ignore) {
     invite =>
-      ()
+      () //todo: coming soon
   }
 
   fixtures.newGame.test(

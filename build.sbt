@@ -12,6 +12,7 @@ val FlyWayVersion          = "7.2.0"
 val ScalaLoggingVersion    = "3.9.4"
 val TestContainersVersion  = "0.39.6"
 val ScalaMetaVersion       = "20.2.0"
+val EnumeratumCirceVersion = "1.7.0"
 
 lazy val runMigrate = taskKey[Unit]("Migrates the database schema.")
 
@@ -49,6 +50,7 @@ lazy val root = (project in file("."))
       "org.flywaydb"               % "flyway-core"                      % FlyWayVersion,
       "com.typesafe.scala-logging" %% "scala-logging"                   % ScalaLoggingVersion,
       "org.scalameta"              %% "svm-subs"                        % ScalaMetaVersion,
+      "com.beachape"               %% "enumeratum-circe"                % EnumeratumCirceVersion,
       "com.dimafeng"               %% "testcontainers-scala-munit"      % TestContainersVersion % "test",
       "com.dimafeng"               %% "testcontainers-scala-postgresql" % TestContainersVersion % "test"
     ),

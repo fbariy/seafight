@@ -47,6 +47,7 @@ trait AppSuite
       Resource.eval {
         for {
           appClient <- IO.delay(appClient)
+
           ex.suc(invite) -> _ <- appClient.createInvite(
             CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
 
