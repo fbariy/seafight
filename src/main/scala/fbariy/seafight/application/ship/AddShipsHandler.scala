@@ -21,9 +21,9 @@ class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepository[F],
     import invited._
 
     //todo: ошибка, игра по такому инвайту уже существует
-    //todo: изолировать вызов валидации с помощью Sync
     for {
-      validated <- validator.correctedShips(ships) match {
+      shipsAreCorrect <- Sync[F].delay(validator.correctedShips(ships))
+      validated <- shipsAreCorrect match {
         case Valid(_) =>
           for {
             _              <- shipsRepo.add(invite, p, p == invite.p1, ships)

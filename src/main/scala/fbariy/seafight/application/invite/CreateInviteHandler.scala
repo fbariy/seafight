@@ -15,17 +15,18 @@ class CreateInviteHandler[F[_]: Sync](validator: CreateInviteValidator,
     : F[ValidatedNec[SamePlayersError.type, InviteOutput]] = {
     import input._
 
-    //todo: изолировать вызов валидации с помощью Sync
-    validator.playersAreNotSame(player1, player2) match {
-      case Valid(_) =>
-        for {
-          id     <- Sync[F].delay(UUID.randomUUID())
-          invite <- inviteRepo.add(Invite(id, player1, player2))
-        } yield Valid(invite)
-      case Invalid(_) =>
-        Validated
-          .invalidNec[SamePlayersError.type, InviteOutput](SamePlayersError)
-          .pure[F]
-    }
+    Sync[F]
+      .delay(validator.playersAreNotSame(player1, player2))
+      .flatMap {
+        case Valid(_) =>
+          for {
+            id     <- Sync[F].delay(UUID.randomUUID())
+            invite <- inviteRepo.add(Invite(id, player1, player2))
+          } yield Valid(invite)
+        case Invalid(_) =>
+          Validated
+            .invalidNec[SamePlayersError.type, InviteOutput](SamePlayersError)
+            .pure[F]
+      }
   }
 }
