@@ -23,10 +23,6 @@ package object codec {
   implicit val cellEncoder: Encoder[Cell]                       = deriveEncoder
   implicit val turnDecoder: Decoder[Turn]                       = deriveDecoder
   implicit val turnEncoder: Encoder[Turn]                       = deriveEncoder
-  implicit val gameDecoder: Decoder[Game]                       = deriveDecoder
-  implicit val gameEncoder: Encoder[Game]                       = deriveEncoder
-  implicit val gameWithPlayersDecoder: Decoder[GameWithPlayers] = deriveDecoder
-  implicit val gameWithPlayersEncoder: Encoder[GameWithPlayers] = deriveEncoder
 
   implicit val createInviteInputDecoder: Decoder[CreateInviteInput] =
     deriveDecoder

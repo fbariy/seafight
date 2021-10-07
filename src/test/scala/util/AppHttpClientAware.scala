@@ -1,7 +1,7 @@
 package util
 
 import cats.effect.IO
-import fbariy.seafight.infrastructure.SeafightClient
+import fbariy.seafight.infrastructure.client.SeafightClient
 import munit.CatsEffectSuite
 import org.http4s._
 import org.http4s.client.Client

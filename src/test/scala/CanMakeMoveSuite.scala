@@ -19,7 +19,7 @@ class CanMakeMoveSuite extends AppSuite {
     }
   }
 
-  fixtures.newGame.test("Second player can't make a move on a new game") { invite =>
+  fixtures.defaultGame.test("Second player can't make a move on a new game") { invite =>
     for {
       ex.suc(canMakeMove) -> _ <- appClient.canMakeMove(invite.id,
         invite.player2)
@@ -27,14 +27,14 @@ class CanMakeMoveSuite extends AppSuite {
     } yield assert(!canMakeMove)
   }
 
-  fixtures.newGame.test("First player make a move on a new game") { invite =>
+  fixtures.defaultGame.test("First player make a move on a new game") { invite =>
     for {
       ex.suc(canMakeMove) -> _ <- appClient.canMakeMove(invite.id,
                                                         invite.player1)
     } yield assert(canMakeMove)
   }
 
-  fixtures.newGame.test(
+  fixtures.defaultGame.test(
     "Player can make a move if the last move was another player") { invite =>
     for {
       ex.suc(firstPlayerCanMakeFirstMove) -> _ <- appClient.canMakeMove(

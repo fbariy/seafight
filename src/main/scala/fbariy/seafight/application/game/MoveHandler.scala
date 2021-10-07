@@ -2,11 +2,11 @@ package fbariy.seafight.application.game
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNec
-import cats.effect.{Concurrent, Sync}
 import cats.effect.concurrent.Semaphore
+import cats.effect.{Concurrent, Sync}
 import cats.implicits._
 import fbariy.seafight.application.errors.AppError
-import fbariy.seafight.domain.{Cell, Turn}
+import fbariy.seafight.domain.{Cell, GameWithPlayers, Player, Turn}
 import fbariy.seafight.infrastructure.PlayerWithGame
 
 class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
@@ -18,8 +18,8 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
       for {
         playerWithGame <- played
         validationRes <- Sync[F].delay(
-          validator.canMakeMove(playerWithGame) |+| validator.gameIsNotOver(
-            playerWithGame.game))
+          validator.gameIsNotOver(playerWithGame.game) |+| validator
+            .canMakeMove(playerWithGame))
         validated <- validationRes match {
           case Valid(_) =>
             val newTurnSerial = playerWithGame.game.turns
@@ -27,17 +27,33 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
               .map(_.serial + 1)
               .getOrElse(1)
 
-            val newTurns = Turn(playerWithGame.p, kick, newTurnSerial) +: playerWithGame.game.turns
+            val newTurns              = Turn(playerWithGame.p, kick, newTurnSerial) +: playerWithGame.game.turns
+            val updatedPlayerWithGame = playerWithGame.updateTurns(newTurns)
 
             gameRepository
-              .updateTurns(playerWithGame.game.id, newTurns)
-              .map { _ =>
-                GameOutput(playerWithGame.updateTurns(newTurns)).validNec[AppError]
-              }
+              .updateGame(playerWithGame.game.id,
+                          Some(newTurns),
+                          checkWinner(updatedPlayerWithGame.game))
+              .map(updated =>
+                GameOutput(updatedPlayerWithGame.copy(game = updated))
+                  .validNec[AppError])
+
           case i @ Invalid(_) => i.pure[F]
         }
       } yield validated
 
     semaphore withPermit makeMove
   }
+
+  private def checkWinner(game: GameWithPlayers): Option[Player] =
+    if (checkGameOver(game.p1Ships, game.getPlayerTurns(game.p2).map(_.kick)))
+      Some(game.p2)
+    else if (checkGameOver(game.p2Ships,
+                           game.getPlayerTurns(game.p1).map(_.kick)))
+      Some(game.p1)
+    else None
+
+  private def checkGameOver(ships: Seq[Cell], kicks: Seq[Cell]): Boolean =
+    if (kicks.size < 20) false
+    else (kicks intersect ships).size >= 20
 }

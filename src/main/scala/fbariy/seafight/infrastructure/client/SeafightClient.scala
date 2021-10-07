@@ -1,28 +1,20 @@
-package fbariy.seafight.infrastructure
+package fbariy.seafight.infrastructure.client
 
 import cats.Applicative
 import cats.data.ValidatedNec
 import cats.effect.{Bracket, Sync}
+import cats.implicits._
 import fbariy.seafight.application.AppErrorOutput
 import fbariy.seafight.application.game.GameOutput
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.application.ship.AddShipsOutput
 import fbariy.seafight.domain.{Cell, Player}
-import org.http4s.Method.{GET, POST}
-import org.http4s.{
-  EntityDecoder,
-  EntityEncoder,
-  Header,
-  Headers,
-  Request,
-  Response,
-  Uri
-}
-import org.http4s.client.Client
 import fbariy.seafight.infrastructure.codec._
+import org.http4s.Method.{GET, POST}
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
-import cats.implicits._
+import org.http4s.client.Client
+import org.http4s._
 
 import java.util.UUID
 

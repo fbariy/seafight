@@ -2,13 +2,14 @@ package util
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyChain, ValidatedNec}
-import cats.effect.{IO, Resource, SyncIO}
+import cats.effect.{IO, Resource, Sync, SyncIO}
+import cats.implicits._
 import com.dimafeng.testcontainers.munit.TestContainerForAll
 import fbariy.seafight.application.AppErrorOutput
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.domain.Player
+import fbariy.seafight.infrastructure.client.{PlayerState, SeafightClient}
 import munit.CatsEffectSuite
-import cats.implicits._
 
 trait AppSuite
     extends CatsEffectSuite
@@ -43,21 +44,52 @@ trait AppSuite
   }
 
   object fixtures {
-    val newGame: SyncIO[FunFixture[InviteOutput]] = ResourceFixture(
-      Resource.eval {
+    val defaultGame: SyncIO[FunFixture[InviteOutput]] =
+      game(PlayerState.defaultState, PlayerState.defaultState)
+
+    def game(p1RawState: String,
+             p2RawState: String): SyncIO[FunFixture[InviteOutput]] =
+      ResourceFixture(Resource.eval {
         for {
           appClient <- IO.delay(appClient)
-
-          ex.suc(invite) -> _ <- appClient.createInvite(
-            CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
-
-          _ <- (
-            //todo: после ввода валидации заполнить корабли
-            appClient.addShips(invite.id, Player("twaryna"))(Seq.empty),
-            appClient.addShips(invite.id, Player("VooDooSh"))(Seq.empty)
-          ).tupled
-
+          invite    <- applyPlayerStates(p1RawState, p2RawState, appClient)
         } yield invite
       })
+
+    private def applyPlayerStates[F[_]: Sync](
+        p1RawState: String,
+        p2RawState: String,
+        appClient: SeafightClient[F]): F[InviteOutput] =
+      for {
+        playerStatesResult <- Sync[F].delay(
+          (PlayerState.fromString(p1RawState),
+           PlayerState
+             .fromString(p2RawState)).tupled)
+
+        p1State -> p2State = playerStatesResult match {
+          case Left(error) =>
+            fail(s"Player states format are wrong. Cause: $error")
+          case Right(states) => states
+        }
+
+        ex.suc(invite) -> _ <- appClient.createInvite(
+          CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
+
+        _ <- (
+          appClient.addShips(invite.id, Player("VooDooSh"))(p1State.ships),
+          appClient.addShips(invite.id, Player("twaryna"))(p2State.ships),
+        ).tupled
+
+        _ <- combineThroughOne(
+          p2State.kicks.map(appClient.move(invite.id, invite.player1)(_)),
+          p1State.kicks.map(appClient.move(invite.id, invite.player2)(_))
+        ).sequence
+
+      } yield invite
+
+    private def combineThroughOne[T](seq1: Seq[T], seq2: Seq[T]): Seq[T] =
+      seq1.zipWithIndex.flatMap {
+        case item -> i => seq2.lift(i).map(Seq(item, _)).getOrElse(Seq(item))
+      }
   }
 }

@@ -7,7 +7,8 @@ case class GameOutput(player: Player,
                       opponent: Player,
                       ships: Seq[Cell],
                       playerTurns: Seq[TurnOutput],
-                      opponentTurns: Seq[TurnOutput])
+                      opponentTurns: Seq[TurnOutput],
+                      winner: Option[Player])
 object GameOutput {
   def apply(played: PlayerWithGame): GameOutput =
     GameOutput(
@@ -15,6 +16,7 @@ object GameOutput {
       played.opp,
       if (played.isFirstPlayer) played.game.p1Ships else played.game.p2Ships,
       played.game.getPlayerTurns(played.p).map(TurnOutput(_)),
-      played.game.getPlayerTurns(played.opp).map(TurnOutput(_))
+      played.game.getPlayerTurns(played.opp).map(TurnOutput(_)),
+      played.game.winner
     )
 }

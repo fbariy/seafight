@@ -9,4 +9,5 @@ trait GameRepository[F[_]] {
   def findByIdAndPlayer(id: UUID, p: Player): F[Option[GameWithPlayers]]
   def add(game: Game): F[Game]
   def updateTurns(id: UUID, turns: Seq[Turn]): F[Game]
+  def updateGame(id: UUID, turns: Option[Seq[Turn]], winner: Option[Player]): F[GameWithPlayers]
 }

@@ -7,6 +7,7 @@ case class GameWithPlayers(id: UUID,
                            p2Ships: Seq[Cell],
                            turns: Seq[Turn],
                            p1: Player,
-                           p2: Player) {
+                           p2: Player,
+                           winner: Option[Player] = None) {
   def getPlayerTurns(p: Player): Seq[Turn] = turns.filter(_.p == p)
 }
