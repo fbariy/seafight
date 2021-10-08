@@ -28,12 +28,6 @@ class DoobieGameRepository[F[_]: Bracket[*[_], Throwable]](
   override def add(game: Game): F[Game] =
     GameSql.insert(game).run.map(_ => game).transact(transactor)
 
-  override def updateTurns(id: UUID, turns: Seq[Turn]): F[Game] =
-    GameSql
-      .updateTurns(id, turns)
-      .withUniqueGeneratedKeys[Game]("id", "p1_ships", "p2_ships", "turns")
-      .transact(transactor)
-
   override def updateGame(id: UUID,
                           turns: Option[Seq[Turn]],
                           winner: Option[Player]): F[GameWithPlayers] =
