@@ -78,7 +78,6 @@ object GameServer {
 
       httpApp = Router[F](
         "api/v1/preparation" -> (
-          preparationEndpoints.example(transactor) <+>
             preparationEndpoints.createInvite(createInviteHdlr) <+>
             withInvite(inviteRepo)(
               preparationEndpoints.addShips(preparationHdlr))
