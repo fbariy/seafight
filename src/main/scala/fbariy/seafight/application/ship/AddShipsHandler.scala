@@ -4,6 +4,7 @@ import cats.Applicative
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNec
 import cats.effect.Sync
+import cats.effect.concurrent.Semaphore
 import cats.implicits._
 import fbariy.seafight.application.errors._
 import fbariy.seafight.application.game.GameRepository
@@ -15,25 +16,30 @@ import java.util.UUID
 
 class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepository[F],
                                   gameRepo: GameRepository[F],
-                                  validator: AddShipsValidator) {
+                                  validator: AddShipsValidator[F],
+                                  semaphore: Semaphore[F]) {
   def handle(
       ships: Seq[Cell],
       invited: PlayerWithInvite): F[ValidatedNec[AppError, AddShipsOutput]] = {
     import invited._
 
-    //todo: ошибка, игра по такому инвайту уже существует
-    for {
-      shipsAreCorrect <- Sync[F].delay(validator.correctedShips(ships))
-      validated <- shipsAreCorrect match {
-        case Valid(_) =>
-          for {
-            _              <- shipsRepo.add(invite, p, p == invite.p1, ships)
-            maybePairShips <- shipsRepo.release(invite)
-            _              <- gameCreatorIfShipsAreDone(maybePairShips)(invite.id)
-          } yield Valid(AddShipsOutput(InviteOutput(invite), p, ships))
-        case i @ Invalid(_) => i.pure[F]
-      }
-    } yield validated
+    def addShips: F[ValidatedNec[AppError, AddShipsOutput]] =
+      for {
+        shipsAreCorrect <- validator
+          .gameIsNotCreated(invite.id)
+          .map(_ |+| validator.correctedShips(ships))
+        validated <- shipsAreCorrect match {
+          case Valid(_) =>
+            for {
+              _              <- shipsRepo.add(invite, p, p == invite.p1, ships)
+              maybePairShips <- shipsRepo.release(invite)
+              _              <- gameCreatorIfShipsAreDone(maybePairShips)(invite.id)
+            } yield Valid(AddShipsOutput(InviteOutput(invite), p, ships))
+          case i @ Invalid(_) => i.pure[F]
+        }
+      } yield validated
+
+    semaphore withPermit addShips
   }
 
   val gameCreatorIfShipsAreDone

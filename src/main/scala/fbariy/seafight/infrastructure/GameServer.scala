@@ -53,10 +53,14 @@ object GameServer {
       cfg        <- Resource.eval(config(blocker))
       transactor <- DBConfig.transactor(cfg.db, global, blocker)
 
+      gameRepo = new DoobieGameRepository[F](transactor)
+
+      addShipsSemaphore <- Resource.eval(Semaphore[F](1))
       preparationHdlr = new AddShipsHandler[F](
         new InMemoryShipsRepository[F],
         new DoobieGameRepository[F](transactor),
-        new AddShipsValidator
+        new AddShipsValidator[F](gameRepo),
+        addShipsSemaphore
       )
       createInviteHdlr = new CreateInviteHandler[F](
         new CreateInviteValidator,
@@ -64,11 +68,10 @@ object GameServer {
       )
       moveValidator = new MoveValidator
       canMoveHdlr   = new CanMakeMoveHandler[F](moveValidator)
-      gameRepo      = new DoobieGameRepository[F](transactor)
       inviteRepo    = new DoobieInviteRepository[F](transactor)
 
-      semaphore <- Resource.eval(Semaphore[F](1))
-      moveHdlr = new MoveHandler(gameRepo, moveValidator, semaphore)
+      moveHandlerSemaphore <- Resource.eval(Semaphore[F](1))
+      moveHdlr = new MoveHandler(gameRepo, moveValidator, moveHandlerSemaphore)
 
       preparationEndpoints = new PreparationEndpoints[F]
       gameEndpoints        = new GameEndpoints[F]

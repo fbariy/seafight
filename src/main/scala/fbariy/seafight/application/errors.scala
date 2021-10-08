@@ -19,4 +19,5 @@ object errors {
   case class PlayerCannotMakeMoveError(p: Player)   extends AppError
   case class GameOverError(winner: Player)          extends AppError
   case object EmptyPlayerError                      extends AppError
+  case object GameAlreadyExist                      extends AppError
 }

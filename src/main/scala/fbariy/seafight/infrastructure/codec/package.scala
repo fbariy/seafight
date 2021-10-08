@@ -55,6 +55,8 @@ package object codec {
       AppErrorOutput("GAME_OVER", s"Игра окончена. Победитель: $winner")
     case EmptyPlayerError =>
       AppErrorOutput("PLAYER_IS_EMPTY", "Имя игрока не может быть пустым")
+    case GameAlreadyExist =>
+      AppErrorOutput("GAME_ALREADY_EXIST", "Игра уже создана")
   }
 
   private val authErrorToJson: PartialFunction[AuthError, AppErrorOutput] = {
