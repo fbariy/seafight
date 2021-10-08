@@ -12,7 +12,7 @@ import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.AuthMiddleware
-import org.http4s.util.CaseInsensitiveString
+import org.typelevel.ci.CIString
 
 import java.util.UUID
 import scala.util.Try
@@ -76,8 +76,8 @@ abstract class AbstractAuth[F[_]: Monad, V, R] {
   protected def getHeaderValue[E](req: Request[F], h: String)(
       e: => E): Either[E, String] =
     req.headers
-      .get(CaseInsensitiveString(h))
-      .map(_.value)
+      .get(CIString(h))
+      .map(_.head.value)
       .toRight(e)
 
   lazy val middleware: AuthMiddleware[F, R] =
@@ -94,13 +94,6 @@ private class GameAuth[F[_]: Monad](gameRepo: GameRepository[F])
       id     <- formatGameId(rawId)
       player <- getPlayer(req)
     } yield (id, player)
-
-//  override protected def getValue(
-//      validateRes: (UUID, Player)): F[Either[AuthError, F[PlayerWithGame]]] =
-//    getGame(validateRes._1, validateRes._2).map {
-//      case Left(e)      => Either.left[AuthError, PlayerWithGame](e)
-//      case r @ Right(_) => r
-//    }
 
   override protected def getValue(
       validateRes: (UUID, Player)): F[Either[AuthError, F[PlayerWithGame]]] = {

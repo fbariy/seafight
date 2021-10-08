@@ -14,8 +14,8 @@ class CanMakeMoveSuite extends AppSuite {
         UUID.randomUUID(),
         Player("HellLighT"))
     } yield {
-      assertEquals(clue(response.status), clue(NotFound))
       assertEquals(clue(error.code), clue("NOT_FOUND_GAME"))
+      assertEquals(clue(response.status), clue(NotFound))
     }
   }
 

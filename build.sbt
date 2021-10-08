@@ -1,7 +1,7 @@
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.Docker
 
 val CatsEffectVersion      = "2.5.1"
-val Http4sVersion          = "0.21.24"
+val Http4sVersion          = "0.22.6"
 val CirceVersion           = "0.13.0"
 val MunitVersion           = "0.7.28"
 val LogbackVersion         = "1.2.3"

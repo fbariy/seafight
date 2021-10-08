@@ -19,10 +19,10 @@ package object codec {
   implicit val playerEncoder: Encoder[Player] =
     (a: Player) => Json.fromString(a.name)
 
-  implicit val cellDecoder: Decoder[Cell]                       = deriveDecoder
-  implicit val cellEncoder: Encoder[Cell]                       = deriveEncoder
-  implicit val turnDecoder: Decoder[Turn]                       = deriveDecoder
-  implicit val turnEncoder: Encoder[Turn]                       = deriveEncoder
+  implicit val cellDecoder: Decoder[Cell] = deriveDecoder
+  implicit val cellEncoder: Encoder[Cell] = deriveEncoder
+  implicit val turnDecoder: Decoder[Turn] = deriveDecoder
+  implicit val turnEncoder: Encoder[Turn] = deriveEncoder
 
   implicit val createInviteInputDecoder: Decoder[CreateInviteInput] =
     deriveDecoder
@@ -53,6 +53,8 @@ package object codec {
       AppErrorOutput("PLAYER_CANNOT_MAKE_MOVE", "Сейчас не ваш ход")
     case GameOverError(winner) =>
       AppErrorOutput("GAME_OVER", s"Игра окончена. Победитель: $winner")
+    case EmptyPlayerError =>
+      AppErrorOutput("PLAYER_IS_EMPTY", "Имя игрока не может быть пустым")
   }
 
   private val authErrorToJson: PartialFunction[AuthError, AppErrorOutput] = {

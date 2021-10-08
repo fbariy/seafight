@@ -15,12 +15,13 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.client.Client
 import org.http4s._
+import org.typelevel.ci.CIString
 
 import java.util.UUID
 
 class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
     httpClient: Client[F],
-    baseUri: Uri) {
+    val baseUri: Uri) {
 
   def canMakeMove(
       gameId: UUID,
@@ -29,8 +30,9 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
       .run(
         Request[F](GET,
                    baseUri / "api" / "v1" / "game" / "can-make-move",
-                   headers = Headers.of(Header("GameId", gameId.toString),
-                                        Header("Player", p.name))))
+                   headers =
+                     Headers(Header.Raw(CIString("GameId"), gameId.toString),
+                             Header.Raw(CIString("Player"), p.name))))
       .use { response =>
         EntityDecoder[F, ValidatedNec[AppErrorOutput, Boolean]]
           .decode(response, strict = true)
@@ -67,8 +69,8 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
           POST,
           baseUri / "api" / "v1" / "preparation" / "ships",
           body = EntityEncoder[F, Seq[Cell]].toEntity(ships).body,
-          headers = Headers.of(Header("InviteId", inviteId.toString),
-                               Header("Player", p.name))
+          headers = Headers(Header.Raw(CIString("InviteId"), inviteId.toString),
+                            Header.Raw(CIString("Player"), p.name))
         ))
       .use { response =>
         EntityDecoder[F, ValidatedNec[AppErrorOutput, AddShipsOutput]]
@@ -88,8 +90,8 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
           POST,
           baseUri / "api" / "v1" / "game" / "move",
           body = EntityEncoder[F, Cell].toEntity(kick).body,
-          headers = Headers.of(Header("GameId", gameId.toString),
-                               Header("Player", p.name))
+          headers = Headers(Header.Raw(CIString("GameId"), gameId.toString),
+                            Header.Raw(CIString("Player"), p.name))
         )
       )
       .use { response =>

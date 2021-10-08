@@ -23,7 +23,7 @@ trait AppSuite
       def unapply[A](validated: ValidatedNec[AppErrorOutput, A]): Some[A] =
         validated match {
           case Valid(a)   => Some(a)
-          case Invalid(_) => fail(s"Response must be valid")
+          case Invalid(e) => fail(s"Response must be valid. Cause: ${e.show}")
         }
     }
 

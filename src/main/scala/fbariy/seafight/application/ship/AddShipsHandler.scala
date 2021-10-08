@@ -7,6 +7,7 @@ import cats.effect.Sync
 import cats.implicits._
 import fbariy.seafight.application.errors._
 import fbariy.seafight.application.game.GameRepository
+import fbariy.seafight.application.invite.InviteOutput
 import fbariy.seafight.domain.{Cell, Game}
 import fbariy.seafight.infrastructure.PlayerWithInvite
 
@@ -29,7 +30,7 @@ class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepository[F],
             _              <- shipsRepo.add(invite, p, p == invite.p1, ships)
             maybePairShips <- shipsRepo.release(invite)
             _              <- gameCreatorIfShipsAreDone(maybePairShips)(invite.id)
-          } yield Valid(AddShipsOutput(invite, p, ships))
+          } yield Valid(AddShipsOutput(InviteOutput(invite), p, ships))
         case i @ Invalid(_) => i.pure[F]
       }
     } yield validated

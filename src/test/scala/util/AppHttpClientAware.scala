@@ -5,7 +5,7 @@ import fbariy.seafight.infrastructure.client.SeafightClient
 import munit.CatsEffectSuite
 import org.http4s._
 import org.http4s.client.Client
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 
 import scala.concurrent.ExecutionContext.global
 

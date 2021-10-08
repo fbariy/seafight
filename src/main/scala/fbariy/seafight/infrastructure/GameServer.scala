@@ -24,7 +24,7 @@ import fbariy.seafight.infrastructure.config.{AppConfig, DBConfig}
 import fbariy.seafight.infrastructure.endpoint._
 import fbariy.seafight.infrastructure.repository._
 import org.http4s.implicits._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
 import org.http4s.server.{Router, Server}
 import pureconfig.ConfigSource
@@ -46,7 +46,7 @@ object GameServer {
   }
 
   def resource[F[_]: ConcurrentEffect: ContextShift](
-      implicit T: Timer[F]): Resource[F, Server[F]] = {
+      implicit T: Timer[F]): Resource[F, Server] = {
     val blocker = Blocker.liftExecutionContext(global)
 
     for {
