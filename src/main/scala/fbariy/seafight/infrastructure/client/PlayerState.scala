@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 
 case class PlayerState(ships: Seq[Cell] = Seq(), kicks: Seq[Cell] = Seq())
 object PlayerState {
-  val rawItemsReg: Regex   = "\\|\\s*(?<item>[~X@])\\s*".r
+  val rawItemsReg: Regex   = "\\|\\s*(?<item>[~X@.])\\s*".r
   val columnNameReg: Regex = "\\|\\s*(?<column>[A-I])\\s*".r
   val rowNumberReg: Regex  = "\\s*(?<row>[1-9])\\s*\\|".r
 
@@ -38,7 +38,7 @@ object PlayerState {
     } yield state
 
   private def validatePlayerStateSize(
-                                       rawPlayerState: String): Either[String, List[String]] = {
+      rawPlayerState: String): Either[String, List[String]] = {
     val rows = rawPlayerState.split("\n")
 
     if (rows.size != 11)
@@ -48,9 +48,9 @@ object PlayerState {
 
   private def validateColumnNamesRow(row: String): Either[String, Unit] =
     if (columnNameReg
-      .findAllMatchIn(row)
-      .map(_.group("column"))
-      .mkString != "ABCDEFGHI")
+          .findAllMatchIn(row)
+          .map(_.group("column"))
+          .mkString != "ABCDEFGHI")
       Left(
         "Недопустимый порядок или название колонок. Допускается: A B C F E F G H I")
     else Right(())
@@ -85,28 +85,32 @@ object PlayerState {
 
   @tailrec
   private def itemsToPlayerState(
-                                  row: Digit,
-                                  items: Seq[(String, Symbol)],
-                                  state: PlayerState): Either[String, PlayerState] =
+      row: Digit,
+      items: Seq[(String, Symbol)],
+      state: PlayerState): Either[String, PlayerState] =
     items match {
       case "~" -> _ :: rest =>
         itemsToPlayerState(row, rest, state)
       case "@" -> column :: rest =>
         itemsToPlayerState(row,
-          rest,
-          state.copy(ships = Cell(column, row) +: state.ships))
+                           rest,
+                           state.copy(ships = Cell(column, row) +: state.ships))
+      case "." -> column :: rest =>
+        itemsToPlayerState(row,
+                           rest,
+                           state.copy(kicks = Cell(column, row) +: state.kicks))
       case "X" -> column :: rest =>
         itemsToPlayerState(row,
-          rest,
-          PlayerState(Cell(column, row) +: state.ships,
-            Cell(column, row) +: state.kicks))
+                           rest,
+                           PlayerState(Cell(column, row) +: state.ships,
+                                       Cell(column, row) +: state.kicks))
       case Seq() => Right(state)
       case item -> _ :: _ =>
-        Left(s"Допускается одно из значений ячейки: ~, X, @. Передано $item")
+        Left(s"Допускается одно из значений ячейки: '.', '~', 'X', '@'. Передано $item")
     }
 
   private def rowItemsWithColumn(
-                                  items: Seq[String]): Either[String, Seq[(String, Symbol)]] = {
+      items: Seq[String]): Either[String, Seq[(String, Symbol)]] = {
     ('A' to 'I').toList
       .map(column =>
         Decoder[Symbol].decodeJson(Json.fromString(column.toString)))
