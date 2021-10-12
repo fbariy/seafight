@@ -1,7 +1,11 @@
 package fbariy.seafight.infrastructure.endpoint
 
 import cats.effect.Sync
-import fbariy.seafight.application.game.{CanMakeMoveHandler, MoveHandler}
+import fbariy.seafight.application.game.{
+  CanMakeMoveHandler,
+  GameOutput,
+  MoveHandler
+}
 import fbariy.seafight.domain.Cell
 import fbariy.seafight.infrastructure.PlayerWithGame
 import org.http4s.AuthedRoutes
@@ -29,6 +33,15 @@ class GameEndpoints[F[_]: Sync] extends Http4sDsl[F] {
           kick      <- authReq.req.as[Cell]
           validated <- handler.handle(played, kick)
           response  <- Ok(validated)
+        } yield response
+    }
+
+  def getGame: AuthedRoutes[F[PlayerWithGame], F] =
+    AuthedRoutes.of[F[PlayerWithGame], F] {
+      case GET -> Root as played =>
+        for {
+          game     <- played
+          response <- Ok(GameOutput(game))
         } yield response
     }
 }

@@ -84,6 +84,7 @@ object GameServer {
         ),
         "api/v1/game" -> (withGame(gameRepo)(
           gameEndpoints.canMakeMove(canMoveHdlr)) <+>
+          withGame(gameRepo)(gameEndpoints.getGame) <+>
           withGame(gameRepo)(gameEndpoints.move(moveHdlr)))
       )
 
