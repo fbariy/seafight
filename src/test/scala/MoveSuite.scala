@@ -91,7 +91,7 @@ class MoveSuite extends AppSuite {
           appClient.move(invite.id, invite.player1)(A \ `2`),
           appClient.move(invite.id, invite.player1)(A \ `3`),
         ).parSequence
-      } yield assert(clue(seqValidated.count(_._1.isValid)) == clue(1))
+      } yield assertEquals(seqValidated.count(_._1.isValid), 1)
   }
 
   override def munitTimeout: Duration =

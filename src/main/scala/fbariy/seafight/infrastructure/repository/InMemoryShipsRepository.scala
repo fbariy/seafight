@@ -1,6 +1,6 @@
 package fbariy.seafight.infrastructure.repository
 
-import cats.Applicative
+import cats.effect.Sync
 import cats.implicits._
 import fbariy.seafight.application.ship.{PlayerShips, ShipsRepository}
 import fbariy.seafight.domain.{Cell, Invite, Player}
@@ -9,14 +9,14 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters.ConcurrentMapHasAsScala
 
-class InMemoryShipsRepository[F[_]: Applicative] extends ShipsRepository[F] {
+class InMemoryShipsRepository[F[_]: Sync] extends ShipsRepository[F] {
   private val preparation =
     new ConcurrentHashMap[UUID, (Option[PlayerShips], Option[PlayerShips])].asScala
 
   override def add(invite: Invite,
                    p: Player,
                    first: Boolean,
-                   ships: Seq[Cell]): F[Seq[Cell]] = {
+                   ships: Seq[Cell]): F[Seq[Cell]] = Sync[F].delay {
     val pShips = PlayerShips(p, ships)
 
     preparation.updateWith(invite.id) {
@@ -32,15 +32,15 @@ class InMemoryShipsRepository[F[_]: Applicative] extends ShipsRepository[F] {
         )
     }
 
-    ships.pure[F]
+    ships
   }
 
-  override def release(
-      invite: Invite): F[Option[(PlayerShips, PlayerShips)]] = {
-    (for {
-      pairMaybeShips <- preparation.get(invite.id)
-      maybePairShips <- pairMaybeShips.tupled
-      _              <- preparation.remove(invite.id)
-    } yield maybePairShips).pure[F]
-  }
+  override def release(invite: Invite): F[Option[(PlayerShips, PlayerShips)]] =
+    Sync[F].delay {
+      for {
+        pairMaybeShips <- preparation.get(invite.id)
+        maybePairShips <- pairMaybeShips.tupled
+        _              <- preparation.remove(invite.id)
+      } yield maybePairShips
+    }
 }

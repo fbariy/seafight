@@ -3,7 +3,7 @@ package fbariy.seafight.infrastructure
 import cats.Monad
 import cats.data.{Kleisli, OptionT}
 import cats.implicits._
-import fbariy.seafight.application.errors._
+import fbariy.seafight.application.error._
 import fbariy.seafight.application.game.GameRepository
 import fbariy.seafight.application.invite.InviteRepository
 import fbariy.seafight.domain.{GameWithPlayers, Invite, Player, Turn}

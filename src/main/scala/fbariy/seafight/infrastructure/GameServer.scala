@@ -10,6 +10,7 @@ import cats.effect.{
   Timer
 }
 import cats.implicits._
+import fbariy.seafight.application.back.{BackToMoveHandler, BackToMoveValidator}
 import fbariy.seafight.application.game.{
   CanMakeMoveHandler,
   MoveHandler,
@@ -22,6 +23,7 @@ import fbariy.seafight.application.invite.{
 import fbariy.seafight.application.ship.{AddShipsHandler, AddShipsValidator}
 import fbariy.seafight.infrastructure.config.{AppConfig, DBConfig}
 import fbariy.seafight.infrastructure.endpoint._
+import fbariy.seafight.infrastructure.notification.InMemoryNotificationBus
 import fbariy.seafight.infrastructure.repository._
 import org.http4s.implicits._
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -53,6 +55,7 @@ object GameServer {
       cfg        <- Resource.eval(config(blocker))
       transactor <- DBConfig.transactor(cfg.db, global, blocker)
 
+      bus      = new InMemoryNotificationBus[F]
       gameRepo = new DoobieGameRepository[F](transactor)
 
       addShipsSemaphore <- Resource.eval(Semaphore[F](1))
@@ -73,19 +76,28 @@ object GameServer {
       moveHandlerSemaphore <- Resource.eval(Semaphore[F](1))
       moveHdlr = new MoveHandler(gameRepo, moveValidator, moveHandlerSemaphore)
 
+      backRepository = new InMemoryBackToMoveRepository[F]
+      backValidator  = new BackToMoveValidator[F](backRepository)
+      backToMoveSemaphore <- Resource.eval(Semaphore[F](1))
+      backToMoveHdlr = new BackToMoveHandler[F](backValidator,
+                                                backRepository,
+                                                bus,
+                                                backToMoveSemaphore)
+
       preparationEndpoints = new PreparationEndpoints[F]
       gameEndpoints        = new GameEndpoints[F]
 
       httpApp = Router[F](
         "api/v1/preparation" -> (
-            preparationEndpoints.createInvite(createInviteHdlr) <+>
+          preparationEndpoints.createInvite(createInviteHdlr) <+>
             withInvite(inviteRepo)(
               preparationEndpoints.addShips(preparationHdlr))
         ),
         "api/v1/game" -> (withGame(gameRepo)(
           gameEndpoints.canMakeMove(canMoveHdlr)) <+>
           withGame(gameRepo)(gameEndpoints.getGame) <+>
-          withGame(gameRepo)(gameEndpoints.move(moveHdlr)))
+          withGame(gameRepo)(gameEndpoints.move(moveHdlr)) <+>
+          withGame(gameRepo)(gameEndpoints.backToMove(backToMoveHdlr)))
       )
 
       finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(

@@ -1,7 +1,7 @@
 package fbariy.seafight.application.invite
 
 import cats.data.ValidatedNec
-import fbariy.seafight.application.errors.{AppError, EmptyPlayerError, SamePlayersError}
+import fbariy.seafight.application.error.{AppError, EmptyPlayerError, SamePlayersError}
 import fbariy.seafight.domain.Player
 import cats.implicits._
 

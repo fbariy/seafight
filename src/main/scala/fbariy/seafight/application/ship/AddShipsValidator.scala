@@ -2,7 +2,7 @@ package fbariy.seafight.application.ship
 
 import cats.Functor
 import cats.data.ValidatedNec
-import fbariy.seafight.application.errors._
+import fbariy.seafight.application.error._
 import fbariy.seafight.domain.Cell
 import cats.implicits._
 import fbariy.seafight.application.game.GameRepository

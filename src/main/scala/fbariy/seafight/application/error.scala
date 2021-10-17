@@ -2,7 +2,7 @@ package fbariy.seafight.application
 
 import fbariy.seafight.domain.{Cell, Player}
 
-object errors {
+object error {
   sealed trait AppError
 
   sealed trait AuthError                        extends AppError
@@ -20,4 +20,6 @@ object errors {
   case class GameOverError(winner: Player)          extends AppError
   case object EmptyPlayerError                      extends AppError
   case object GameAlreadyExist                      extends AppError
+  case object MoveIsNotExistError                   extends AppError
+  case object BackAlreadyRequestedError             extends AppError
 }

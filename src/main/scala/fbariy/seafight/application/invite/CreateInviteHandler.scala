@@ -4,7 +4,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data.{Validated, ValidatedNec}
 import cats.effect.Sync
 import cats.implicits._
-import fbariy.seafight.application.errors._
+import fbariy.seafight.application.error._
 import fbariy.seafight.domain.{Invite, Player}
 
 import java.util.UUID

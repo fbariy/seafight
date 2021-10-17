@@ -2,7 +2,7 @@ package fbariy.seafight.application.game
 
 import cats.data.ValidatedNec
 import cats.implicits._
-import fbariy.seafight.application.errors.{AppError, GameOverError, PlayerCannotMakeMoveError}
+import fbariy.seafight.application.error.{AppError, GameOverError, PlayerCannotMakeMoveError}
 import fbariy.seafight.domain.GameWithPlayers
 import fbariy.seafight.infrastructure.PlayerWithGame
 

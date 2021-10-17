@@ -15,10 +15,7 @@ import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.client.Client
-import org.http4s.client.dsl.io._
-import org.http4s.headers.Accept
 import org.typelevel.ci.CIStringSyntax
-import org.http4s.client.dsl.Http4sClientDsl
 
 import java.util.UUID
 
@@ -109,9 +106,6 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
   def getGame(
       gameId: UUID,
       p: Player): F[(ValidatedNec[AppErrorOutput, GameOutput], Response[F])] = {
-    val dsl = new Http4sClientDsl[F] {}
-    import dsl._
-
     httpClient
       .run(
         Request[F](
@@ -131,4 +125,25 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
           }
       }
   }
+
+  def backToMove(gameId: UUID, p: Player)(
+      moveNumber: Int): F[(ValidatedNec[AppErrorOutput, Unit], Response[F])] =
+    httpClient
+      .run(
+        Request[F](
+          POST,
+          baseUri / "api" / "v1" / "game" / "back" / moveNumber.toString,
+          headers = Headers(Header.Raw(ci"GameId", gameId.toString),
+                            Header.Raw(ci"Player", p.name))
+        )
+      )
+      .use { response =>
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, Unit]]
+          .decode(response, strict = true)
+          .value
+          .map {
+            case Left(failure)    => throw failure
+            case Right(validated) => validated -> response
+          }
+      }
 }

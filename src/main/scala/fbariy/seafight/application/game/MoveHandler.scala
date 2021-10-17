@@ -5,7 +5,7 @@ import cats.data.ValidatedNec
 import cats.effect.concurrent.Semaphore
 import cats.effect.{Concurrent, Sync}
 import cats.implicits._
-import fbariy.seafight.application.errors.AppError
+import fbariy.seafight.application.error.AppError
 import fbariy.seafight.domain.{Cell, GameWithPlayers, Player, Turn}
 import fbariy.seafight.infrastructure.PlayerWithGame
 

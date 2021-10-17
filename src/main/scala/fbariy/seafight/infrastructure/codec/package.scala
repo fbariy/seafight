@@ -4,7 +4,7 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyChain, ValidatedNec}
 import cats.implicits._
 import fbariy.seafight.application.AppErrorOutput
-import fbariy.seafight.application.errors._
+import fbariy.seafight.application.error._
 import fbariy.seafight.application.game.{GameOutput, TurnOutput}
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.application.ship.AddShipsOutput
@@ -57,6 +57,10 @@ package object codec {
       AppErrorOutput("PLAYER_IS_EMPTY", "Имя игрока не может быть пустым")
     case GameAlreadyExist =>
       AppErrorOutput("GAME_ALREADY_EXIST", "Игра уже создана")
+    case MoveIsNotExistError =>
+      AppErrorOutput("MOVE_IS_NOT_EXIST", "Ход не существует")
+    case BackAlreadyRequestedError =>
+      AppErrorOutput("BACK_ALREADY_REQUESTED", "Возврат уже запрошен")
   }
 
   private val authErrorToJson: PartialFunction[AuthError, AppErrorOutput] = {

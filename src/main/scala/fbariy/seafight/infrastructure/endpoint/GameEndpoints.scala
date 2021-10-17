@@ -14,6 +14,7 @@ import fbariy.seafight.infrastructure.codec._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
 import cats.implicits._
+import fbariy.seafight.application.back.BackToMoveHandler
 
 class GameEndpoints[F[_]: Sync] extends Http4sDsl[F] {
   def canMakeMove(
@@ -43,5 +44,15 @@ class GameEndpoints[F[_]: Sync] extends Http4sDsl[F] {
           game     <- played
           response <- Ok(GameOutput(game))
         } yield response
+    }
+
+  def backToMove(
+      handler: BackToMoveHandler[F]): AuthedRoutes[F[PlayerWithGame], F] =
+    AuthedRoutes.of[F[PlayerWithGame], F] {
+      case POST -> Root / "back" / IntVar(moveNumber) as played =>
+        for {
+          validated <- handler.handle(played, moveNumber)
+          result <- Ok(validated)
+        } yield result
     }
 }

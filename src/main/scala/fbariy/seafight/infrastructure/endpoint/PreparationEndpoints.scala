@@ -2,12 +2,7 @@ package fbariy.seafight.infrastructure.endpoint
 
 import cats.effect.{ContextShift, Sync}
 import cats.implicits._
-import doobie.implicits._
-import doobie.util.transactor.Transactor
-import fbariy.seafight.application.invite.{
-  CreateInviteHandler,
-  CreateInviteInput
-}
+import fbariy.seafight.application.invite.{CreateInviteHandler, CreateInviteInput}
 import fbariy.seafight.application.ship.AddShipsHandler
 import fbariy.seafight.domain.Cell
 import fbariy.seafight.infrastructure.PlayerWithInvite
