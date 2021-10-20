@@ -22,4 +22,5 @@ object error {
   case object GameAlreadyExist                      extends AppError
   case object MoveIsNotExistError                   extends AppError
   case object BackAlreadyRequestedError             extends AppError
+  case object BackNotRequestedError                 extends AppError
 }

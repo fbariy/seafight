@@ -146,4 +146,48 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
             case Right(validated) => validated -> response
           }
       }
+
+  def acceptBack(
+      gameId: UUID,
+      p: Player): F[(ValidatedNec[AppErrorOutput, Unit], Response[F])] =
+    httpClient
+      .run(
+        Request[F](
+          POST,
+          baseUri / "api" / "v1" / "game" / "accept-back",
+          headers = Headers(Header.Raw(ci"GameId", gameId.toString),
+                            Header.Raw(ci"Player", p.name))
+        )
+      )
+      .use { response =>
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, Unit]]
+          .decode(response, strict = true)
+          .value
+          .map {
+            case Left(failure)    => throw failure
+            case Right(validated) => validated -> response
+          }
+      }
+
+  def cancelBack(
+      gameId: UUID,
+      p: Player): F[(ValidatedNec[AppErrorOutput, Unit], Response[F])] =
+    httpClient
+      .run(
+        Request[F](
+          POST,
+          baseUri / "api" / "v1" / "game" / "cancel-back",
+          headers = Headers(Header.Raw(ci"GameId", gameId.toString),
+                            Header.Raw(ci"Player", p.name))
+        )
+      )
+      .use { response =>
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, Unit]]
+          .decode(response, strict = true)
+          .value
+          .map {
+            case Left(failure)    => throw failure
+            case Right(validated) => validated -> response
+          }
+      }
 }

@@ -2,11 +2,7 @@ package fbariy.seafight.application.back
 
 import cats.Functor
 import cats.data.ValidatedNec
-import fbariy.seafight.application.error.{
-  AppError,
-  BackAlreadyRequestedError,
-  MoveIsNotExistError
-}
+import fbariy.seafight.application.error._
 import fbariy.seafight.domain.{GameWithPlayers, Turn}
 import cats.syntax.validated._
 import cats.syntax.functor._

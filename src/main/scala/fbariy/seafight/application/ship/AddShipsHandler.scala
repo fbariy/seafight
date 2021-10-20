@@ -23,7 +23,7 @@ class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepository[F],
       invited: PlayerWithInvite): F[ValidatedNec[AppError, AddShipsOutput]] = {
     import invited._
 
-    def addShips: F[ValidatedNec[AppError, AddShipsOutput]] =
+    def createShips: F[ValidatedNec[AppError, AddShipsOutput]] =
       for {
         shipsAreCorrect <- validator
           .gameIsNotCreated(invite.id)
@@ -39,7 +39,7 @@ class AddShipsHandler[F[_]: Sync](shipsRepo: ShipsRepository[F],
         }
       } yield validated
 
-    semaphore withPermit addShips
+    semaphore withPermit createShips
   }
 
   val gameCreatorIfShipsAreDone

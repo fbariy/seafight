@@ -10,7 +10,11 @@ import cats.effect.{
   Timer
 }
 import cats.implicits._
-import fbariy.seafight.application.back.{BackToMoveHandler, BackToMoveValidator}
+import fbariy.seafight.application.back.{
+  BackToMoveHandler,
+  BackToMoveValidator,
+  CancelBackHandler
+}
 import fbariy.seafight.application.game.{
   CanMakeMoveHandler,
   MoveHandler,
@@ -87,6 +91,11 @@ object GameServer {
                                                 bus,
                                                 backToMoveSemaphore)
 
+      cancelBackSemaphore <- Resource.eval(Semaphore[F](1))
+      cancelBackHdlr = new CancelBackHandler[F](backRepository,
+                                                bus,
+                                                cancelBackSemaphore)
+
       preparationEndpoints = new PreparationEndpoints[F]
       gameEndpoints        = new GameEndpoints[F]
 
@@ -96,11 +105,13 @@ object GameServer {
             withInvite(inviteRepo)(
               preparationEndpoints.addShips(preparationHdlr))
         ),
-        "api/v1/game" -> (withGame(gameRepo)(
-          gameEndpoints.canMakeMove(canMoveHdlr)) <+>
-          withGame(gameRepo)(gameEndpoints.getGame) <+>
-          withGame(gameRepo)(gameEndpoints.move(moveHdlr)) <+>
-          withGame(gameRepo)(gameEndpoints.backToMove(backToMoveHdlr)))
+        "api/v1/game" -> (
+          withGame(gameRepo)(gameEndpoints.canMakeMove(canMoveHdlr)) <+>
+            withGame(gameRepo)(gameEndpoints.getGame) <+>
+            withGame(gameRepo)(gameEndpoints.move(moveHdlr)) <+>
+            withGame(gameRepo)(gameEndpoints.backToMove(backToMoveHdlr)) <+>
+            withGame(gameRepo)(gameEndpoints.cancelBack(cancelBackHdlr))
+        )
       )
 
       finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(

@@ -12,8 +12,8 @@ package object notification {
                                           gameId: UUID,
                                           move: TurnOutput)
       extends AppNotification
-  final case class AcceptBackToMoveNotification(initiator: Player, gameId: UUID)
+  final case class AcceptBackNotification(initiator: Player, gameId: UUID)
       extends AppNotification
-  final case class CancelBackToMoveNotification(initiator: Player, gameId: UUID)
+  final case class CancelBackNotification(initiator: Player, gameId: UUID)
       extends AppNotification
 }

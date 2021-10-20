@@ -42,4 +42,22 @@ class BackToMoveSuite extends AppSuite {
         seqResults <- Seq(backToMove, backToMove, backToMove).parSequence
       } yield assertEquals(seqResults.count(_._1.isValid), 1)
   }
+
+  fixtures.defaultGame.test("Player can't cancel a not-existent back") {
+    invite =>
+      for {
+        ex.errFirst(err) -> _ <- appClient.cancelBack(invite.id, invite.player1)
+      } yield assertEquals(err.code, "BACK_NOT_REQUESTED")
+  }
+
+  fixtures.defaultGame.test("Player can cancel an existing back") { invite =>
+    for {
+      _ <- appClient.move(invite.id, invite.player1)(A \ `1`)
+      _ <- appClient.move(invite.id, invite.player2)(A \ `2`)
+
+      _ <- appClient.backToMove(invite.id, invite.player1)(1)
+
+      ex.suc(_) -> _ <- appClient.cancelBack(invite.id, invite.player1)
+    } yield ()
+  }
 }
