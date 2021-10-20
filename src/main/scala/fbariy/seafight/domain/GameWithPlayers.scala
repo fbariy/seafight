@@ -8,6 +8,31 @@ case class GameWithPlayers(id: UUID,
                            turns: Seq[Turn],
                            p1: Player,
                            p2: Player,
-                           winner: Option[Player] = None) {
-  def getPlayerTurns(p: Player): Seq[Turn] = turns.filter(_.p == p)
+                           winner: Option[Player] = None)
+
+object GameWithPlayers {
+  def playerTurns(moves: Seq[Turn], p: Player): Seq[Turn] =
+    moves.filter(_.p == p)
+
+  def checkWinner(moves: Seq[Turn],
+                  p1: Player,
+                  p1Ships: Seq[Cell],
+                  p2: Player,
+                  p2Ships: Seq[Cell]): Option[Player] =
+    if (checkGameOver(p1Ships, playerTurns(moves, p2).map(_.kick)))
+      Some(p2)
+    else if (checkGameOver(p2Ships, playerTurns(moves, p1).map(_.kick)))
+      Some(p1)
+    else None
+
+  def checkGameOver(ships: Seq[Cell], kicks: Seq[Cell]): Boolean =
+    if (kicks.size < 20) false
+    else (kicks intersect ships).size >= 20
+
+  implicit class GameWithPlayersOps(game: GameWithPlayers) {
+    def playerTurns(p: Player): Seq[Turn] =
+      GameWithPlayers.playerTurns(game.turns, p)
+    def nextSerial: Int =
+      game.turns.maxByOption(_.serial).map(_.serial + 1).getOrElse(1)
+  }
 }

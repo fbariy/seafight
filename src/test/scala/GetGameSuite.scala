@@ -1,4 +1,3 @@
-import fbariy.seafight.domain.Cell.CellOps
 import fbariy.seafight.domain.Digit.`4`
 import fbariy.seafight.domain.Symbol.D
 import fbariy.seafight.infrastructure.client.PlayerState

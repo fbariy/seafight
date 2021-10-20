@@ -1,6 +1,5 @@
 import cats.implicits._
 import fbariy.seafight.application.game.TurnOutput
-import fbariy.seafight.domain.Cell.CellOps
 import fbariy.seafight.domain.Digit._
 import fbariy.seafight.domain.Symbol._
 import util.AppSuite
@@ -70,7 +69,7 @@ class MoveSuite extends AppSuite {
         | 1 || ~ | ~ | ~ | ~ | ~ | ~ | ~ | ~ | ~
         |""".stripMargin
     )
-    .test("Player can't a move on game that over") { invite =>
+    .test("Player can't make a move on game that over") { invite =>
       for {
         ex.suc(gameAtLastMove) -> _ <- appClient.move(invite.id,
                                                       invite.player1)(D \ `4`)
@@ -92,6 +91,16 @@ class MoveSuite extends AppSuite {
           appClient.move(invite.id, invite.player1)(A \ `3`),
         ).parSequence
       } yield assertEquals(seqValidated.count(_._1.isValid), 1)
+  }
+
+  fixtures.defaultGame.test(
+    "Player can't make a move when back to move requested") { invite =>
+    for {
+      _              <- appClient.move(invite.id, invite.player1)(A \ `1`)
+      ex.suc(_) -> _ <- appClient.backToMove(invite.id, invite.player1)(1)
+      ex.errFirst(err) -> _ <- appClient.move(invite.id, invite.player1)(
+        I \ `9`)
+    } yield assertEquals(err.code, "BACK_ALREADY_REQUESTED")
   }
 
   override def munitTimeout: Duration =

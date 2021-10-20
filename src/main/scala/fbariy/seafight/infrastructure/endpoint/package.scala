@@ -32,10 +32,7 @@ case class PlayerWithInvite(p: Player, invite: Invite)
 case class PlayerWithGame(p: Player,
                           opp: Player,
                           isFirstPlayer: Boolean,
-                          game: GameWithPlayers) {
-  def updateTurns(newTurns: Seq[Turn]): PlayerWithGame =
-    this.copy(game = game.copy(turns = newTurns))
-}
+                          game: GameWithPlayers)
 
 abstract class AbstractAuth[F[_]: Monad, V, R] {
   protected def validate(req: Request[F]): Either[AuthError, V]

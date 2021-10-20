@@ -60,7 +60,7 @@ package object codec {
     case MoveIsNotExistError =>
       AppErrorOutput("MOVE_IS_NOT_EXIST", "Ход не существует")
     case BackAlreadyRequestedError =>
-      AppErrorOutput("BACK_ALREADY_REQUESTED", "Возврат уже запрошен")
+      AppErrorOutput("BACK_ALREADY_REQUESTED", "Возврат хода уже запрошен")
   }
 
   private val authErrorToJson: PartialFunction[AuthError, AppErrorOutput] = {

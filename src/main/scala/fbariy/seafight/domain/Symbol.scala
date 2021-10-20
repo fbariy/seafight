@@ -16,4 +16,8 @@ case object Symbol extends Enum[Symbol] with CirceEnum[Symbol] {
   case object I extends Symbol
 
   val values: IndexedSeq[Symbol] = findValues
+
+  implicit class SymbolOps(symbol: Symbol) {
+    def \(digit: Digit): Cell = Cell(symbol, digit)
+  }
 }

@@ -1,4 +1,3 @@
-import fbariy.seafight.domain.Cell.CellOps
 import fbariy.seafight.domain.Digit._
 import fbariy.seafight.domain.Symbol._
 import fbariy.seafight.domain._

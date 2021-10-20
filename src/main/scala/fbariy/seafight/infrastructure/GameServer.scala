@@ -69,15 +69,18 @@ object GameServer {
         new CreateInviteValidator,
         new DoobieInviteRepository[F](transactor)
       )
-      moveValidator = new MoveValidator
-      canMoveHdlr   = new CanMakeMoveHandler[F](moveValidator)
-      inviteRepo    = new DoobieInviteRepository[F](transactor)
-
-      moveHandlerSemaphore <- Resource.eval(Semaphore[F](1))
-      moveHdlr = new MoveHandler(gameRepo, moveValidator, moveHandlerSemaphore)
-
+      moveValidator  = new MoveValidator
       backRepository = new InMemoryBackToMoveRepository[F]
       backValidator  = new BackToMoveValidator[F](backRepository)
+      canMoveHdlr    = new CanMakeMoveHandler[F](moveValidator)
+      inviteRepo     = new DoobieInviteRepository[F](transactor)
+
+      moveHandlerSemaphore <- Resource.eval(Semaphore[F](1))
+      moveHdlr = new MoveHandler(gameRepo,
+                                 moveValidator,
+                                 backValidator,
+                                 moveHandlerSemaphore)
+
       backToMoveSemaphore <- Resource.eval(Semaphore[F](1))
       backToMoveHdlr = new BackToMoveHandler[F](backValidator,
                                                 backRepository,
