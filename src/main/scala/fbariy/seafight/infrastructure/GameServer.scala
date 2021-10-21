@@ -92,7 +92,8 @@ object GameServer {
                                                 backToMoveSemaphore)
 
       cancelBackSemaphore <- Resource.eval(Semaphore[F](1))
-      cancelBackHdlr = new CancelBackHandler[F](backRepository,
+      cancelBackHdlr = new CancelBackHandler[F](backValidator,
+                                                backRepository,
                                                 bus,
                                                 cancelBackSemaphore)
 

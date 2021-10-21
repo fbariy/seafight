@@ -18,6 +18,6 @@ class InMemoryBackToMoveRepository[F[_]: Sync] extends BackToMoveRepository[F] {
   override def release(gameId: UUID): F[Option[(Player, Turn)]] =
     Sync[F].delay(requests.remove(gameId))
 
-  override def has(gameId: UUID): F[Boolean] =
-    Sync[F].delay(requests.exists(a => a._1 == gameId))
+  override def find(gameId: UUID): F[Option[(Player, Turn)]] =
+    Sync[F].delay(requests.get(gameId))
 }
