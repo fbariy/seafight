@@ -28,13 +28,12 @@ class DoobieGameRepository[F[_]: Bracket[*[_], Throwable]](
   override def add(game: Game): F[Game] =
     GameSql.insert(game).run.map(_ => game).transact(transactor)
 
-  override def updateGame(id: UUID,
-                          turns: Option[Seq[Turn]],
-                          winner: Option[Player]): F[GameWithPlayers] =
-    (for {
-      _    <- GameSql.updateGame(id, turns, winner).run
-      game <- GameSql.find(Some(id), None).unique
-    } yield game).transact(transactor)
+  override def updateGame(game: GameWithPlayers): F[Unit] =
+    GameSql
+      .updateGame(game.id, Some(game.turns), game.winner)
+      .run
+      .map(_ => ())
+      .transact(transactor)
 }
 
 private object GameSql {

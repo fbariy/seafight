@@ -7,7 +7,7 @@ import cats.implicits._
 import fbariy.seafight.application.error.AppError
 import fbariy.seafight.application.game.TurnOutput
 import fbariy.seafight.application.notification.{
-  BackToMoveNotification,
+  BackRequestedNotification,
   NotificationBus
 }
 import fbariy.seafight.domain.Turn
@@ -31,7 +31,7 @@ class BackToMoveHandler[F[_]: Sync](
           for {
             _ <- backToMoveRepository.add(game.id, playerCtx.p, turn)
             _ <- bus.enqueue(
-              BackToMoveNotification(playerCtx.p, game.id, TurnOutput(turn)))
+              BackRequestedNotification(playerCtx.p, game.id, TurnOutput(turn)))
           } yield ()
         }
       } yield result

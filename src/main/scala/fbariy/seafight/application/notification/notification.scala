@@ -8,12 +8,14 @@ import java.util.UUID
 package object notification {
   sealed trait AppNotification
 
-  final case class BackToMoveNotification(initiator: Player,
-                                          gameId: UUID,
-                                          move: TurnOutput)
+  final case class BackRequestedNotification(initiator: Player,
+                                             gameId: UUID,
+                                             move: TurnOutput)
       extends AppNotification
-  final case class AcceptBackNotification(initiator: Player, gameId: UUID)
+  final case class BackAcceptedNotification(initiator: Player, gameId: UUID)
       extends AppNotification
-  final case class CancelBackNotification(initiator: Player, gameId: UUID)
+  final case class BackCanceled(initiator: Player, gameId: UUID)
+      extends AppNotification
+  final case class MoveMadeNotification(initiator: Player, gameId: UUID)
       extends AppNotification
 }

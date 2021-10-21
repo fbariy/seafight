@@ -6,13 +6,14 @@ import cats.effect.{Concurrent, Sync}
 import cats.implicits._
 import fbariy.seafight.application.back.BackToMoveValidator
 import fbariy.seafight.application.error.AppError
-import fbariy.seafight.domain.GameWithPlayers._
-import fbariy.seafight.domain.{Cell, Turn}
+import fbariy.seafight.application.notification.{MoveMadeNotification, NotificationBus}
+import fbariy.seafight.domain.Cell
 import fbariy.seafight.infrastructure.PlayerWithGame
 
 class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
                                     moveValidator: MoveValidator,
                                     backValidator: BackToMoveValidator[F],
+                                    bus: NotificationBus[F],
                                     semaphore: Semaphore[F]) {
   def handle(played: F[PlayerWithGame],
              kick: Cell): F[ValidatedNec[AppError, GameOutput]] = {
@@ -21,14 +22,13 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
         playerCtx   <- played
         validateRes <- validate(playerCtx)
         validated <- validateRes.traverse { _ =>
-          val updatedPlayerCtx = updateGame(playerCtx, kick)
-          val updatedGame      = updatedPlayerCtx.game
+          val updatedCtx = playerCtx.addMove(kick)
 
-          gameRepository
-            .updateGame(updatedGame.id,
-                        Some(updatedGame.turns),
-                        updatedGame.winner)
-            .map(_ => updatedPlayerCtx)
+          for {
+            _ <- gameRepository.updateGame(updatedCtx.game)
+            _ <- bus.enqueue(
+              MoveMadeNotification(updatedCtx.p, updatedCtx.game.id))
+          } yield updatedCtx
         }
       } yield validated.map(GameOutput(_))
 
@@ -43,14 +43,5 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
        Sync[F].delay(moveValidator.canMakeMove(playerCtx)))
 
     validators.mapN(_ |+| _ |+| _)
-  }
-
-  def updateGame(playerCtx: PlayerWithGame, kick: Cell): PlayerWithGame = {
-    val game         = playerCtx.game
-    val updatedMoves = Turn(playerCtx.p, kick, game.nextSerial) +: game.turns
-    val maybeWinner =
-      checkWinner(updatedMoves, game.p1, game.p1Ships, game.p2, game.p2Ships)
-
-    playerCtx.copy(game = game.copy(turns = updatedMoves, winner = maybeWinner))
   }
 }

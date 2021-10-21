@@ -6,7 +6,7 @@ import cats.effect.concurrent.Semaphore
 import cats.implicits._
 import fbariy.seafight.application.error.AppError
 import fbariy.seafight.application.notification.{
-  CancelBackNotification,
+  BackCanceled,
   NotificationBus
 }
 import fbariy.seafight.infrastructure.PlayerWithGame
@@ -25,7 +25,7 @@ class CancelBackHandler[F[_]: Sync](validator: BackToMoveValidator[F],
           for {
             _ <- repository.release(playerCtx.game.id)
             _ <- bus.enqueue(
-              CancelBackNotification(playerCtx.p, playerCtx.game.id))
+              BackCanceled(playerCtx.p, playerCtx.game.id))
           } yield ()
         }
 

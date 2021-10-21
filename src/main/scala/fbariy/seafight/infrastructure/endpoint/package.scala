@@ -6,7 +6,7 @@ import cats.implicits._
 import fbariy.seafight.application.error._
 import fbariy.seafight.application.game.GameRepository
 import fbariy.seafight.application.invite.InviteRepository
-import fbariy.seafight.domain.{GameWithPlayers, Invite, Player, Turn}
+import fbariy.seafight.domain.{Cell, GameWithPlayers, Invite, Player, Turn}
 import fbariy.seafight.infrastructure.codec._
 import org.http4s._
 import org.http4s.circe.CirceEntityEncoder._
@@ -33,6 +33,15 @@ case class PlayerWithGame(p: Player,
                           opp: Player,
                           isFirstPlayer: Boolean,
                           game: GameWithPlayers)
+object PlayerWithGame {
+  implicit class PlayerWithGameOps(playerCtx: PlayerWithGame) {
+    def updateMoves(moves: Seq[Turn]): PlayerWithGame =
+      playerCtx.copy(game = playerCtx.game.updateMoves(moves))
+
+    def addMove(kick: Cell): PlayerWithGame =
+      playerCtx.copy(game = playerCtx.game.addMove(playerCtx.p, kick))
+  }
+}
 
 abstract class AbstractAuth[F[_]: Monad, V, R] {
   protected def validate(req: Request[F]): Either[AuthError, V]

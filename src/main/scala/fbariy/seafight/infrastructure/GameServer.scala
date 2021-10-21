@@ -83,6 +83,7 @@ object GameServer {
       moveHdlr = new MoveHandler(gameRepo,
                                  moveValidator,
                                  backValidator,
+                                 bus,
                                  moveHandlerSemaphore)
 
       backToMoveSemaphore <- Resource.eval(Semaphore[F](1))

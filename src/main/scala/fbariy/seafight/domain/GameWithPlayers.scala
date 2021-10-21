@@ -32,7 +32,17 @@ object GameWithPlayers {
   implicit class GameWithPlayersOps(game: GameWithPlayers) {
     def playerTurns(p: Player): Seq[Turn] =
       GameWithPlayers.playerTurns(game.turns, p)
+
     def nextSerial: Int =
       game.turns.maxByOption(_.serial).map(_.serial + 1).getOrElse(1)
+
+    def addMove(p: Player, kick: Cell): GameWithPlayers =
+      updateMoves(Turn(p, kick, nextSerial) +: game.turns)
+
+    def updateMoves(moves: Seq[Turn]): GameWithPlayers =
+      game.copy(
+        turns = moves,
+        winner =
+          checkWinner(moves, game.p1, game.p1Ships, game.p2, game.p2Ships))
   }
 }
