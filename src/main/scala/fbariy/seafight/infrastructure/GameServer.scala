@@ -11,6 +11,7 @@ import cats.effect.{
 }
 import cats.implicits._
 import fbariy.seafight.application.back.{
+  AcceptBackHandler,
   BackToMoveHandler,
   BackToMoveValidator,
   CancelBackHandler
@@ -98,6 +99,13 @@ object GameServer {
                                                 bus,
                                                 cancelBackSemaphore)
 
+      acceptBackSemaphore <- Resource.eval(Semaphore[F](1))
+      acceptBackHdlr = new AcceptBackHandler[F](backValidator,
+                                                backRepository,
+                                                gameRepo,
+                                                bus,
+                                                acceptBackSemaphore)
+
       preparationEndpoints = new PreparationEndpoints[F]
       gameEndpoints        = new GameEndpoints[F]
 
@@ -112,7 +120,8 @@ object GameServer {
             withGame(gameRepo)(gameEndpoints.getGame) <+>
             withGame(gameRepo)(gameEndpoints.move(moveHdlr)) <+>
             withGame(gameRepo)(gameEndpoints.backToMove(backToMoveHdlr)) <+>
-            withGame(gameRepo)(gameEndpoints.cancelBack(cancelBackHdlr))
+            withGame(gameRepo)(gameEndpoints.cancelBack(cancelBackHdlr)) <+>
+            withGame(gameRepo)(gameEndpoints.acceptBack(acceptBackHdlr))
         )
       )
 

@@ -10,7 +10,7 @@ import fbariy.seafight.infrastructure.codec._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
 import cats.implicits._
-import fbariy.seafight.application.back.{BackToMoveHandler, CancelBackHandler}
+import fbariy.seafight.application.back.{AcceptBackHandler, BackToMoveHandler, CancelBackHandler}
 
 class GameEndpoints[F[_]: Sync] extends Http4sDsl[F] {
   def canMakeMove(
@@ -55,6 +55,15 @@ class GameEndpoints[F[_]: Sync] extends Http4sDsl[F] {
   def cancelBack(handler: CancelBackHandler[F]): AuthedRoutes[F[PlayerWithGame], F] =
     AuthedRoutes.of[F[PlayerWithGame], F] {
       case POST -> Root / "cancel-back" as played =>
+        for {
+          validated <- handler.handle(played)
+          response <- Ok(validated)
+        } yield response
+    }
+
+  def acceptBack(handler: AcceptBackHandler[F]): AuthedRoutes[F[PlayerWithGame], F] =
+    AuthedRoutes.of[F[PlayerWithGame], F] {
+      case POST -> Root / "accept-back" as played =>
         for {
           validated <- handler.handle(played)
           response <- Ok(validated)

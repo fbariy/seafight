@@ -40,11 +40,14 @@ class BackToMoveHandler[F[_]: Sync](
   }
 
   private def validate(playerCtx: PlayerWithGame,
-                       moveNumber: Int): F[ValidatedNec[AppError, Turn]] =
-    validator
-      .backIsNotRequested(playerCtx.game)
-      .map(
-        isNotRequested =>
-          (isNotRequested -> validator.moveIsExist(playerCtx.game, moveNumber))
-            .mapN((_, turn) => turn))
+                       moveNumber: Int): F[ValidatedNec[AppError, Turn]] = {
+    val validators = (
+      validator.backIsNotRequested(playerCtx.game),
+      Sync[F].delay(validator.moveIsExist(playerCtx.game, moveNumber))
+    )
+
+    validators.mapN { (backIsNotRequested, moveIsExist) =>
+      (backIsNotRequested product moveIsExist).map(_._2)
+    }
+  }
 }

@@ -30,4 +30,8 @@ class BackToMoveValidator[F[_]: Functor](repository: BackToMoveRepository[F]) {
     repository
       .find(game.id)
       .map(_.toRight(BackNotRequestedError).toValidatedNec)
+
+  def isOpponentAccepts(opp: Player, backInitiator: Player): ValidatedNec[AppError, Unit] =
+    if (opp == backInitiator) InitiatorCannotAcceptBackError.invalidNec[Unit]
+    else ().validNec[InitiatorCannotAcceptBackError.type]
 }

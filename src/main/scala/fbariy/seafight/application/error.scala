@@ -23,4 +23,5 @@ object error {
   case object MoveIsNotExistError                   extends AppError
   case object BackAlreadyRequestedError             extends AppError
   case object BackNotRequestedError                 extends AppError
+  case object InitiatorCannotAcceptBackError        extends AppError
 }

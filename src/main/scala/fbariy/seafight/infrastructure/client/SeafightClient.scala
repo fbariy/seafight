@@ -149,7 +149,7 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
 
   def acceptBack(
       gameId: UUID,
-      p: Player): F[(ValidatedNec[AppErrorOutput, Unit], Response[F])] =
+      p: Player): F[(ValidatedNec[AppErrorOutput, GameOutput], Response[F])] =
     httpClient
       .run(
         Request[F](
@@ -160,7 +160,7 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
         )
       )
       .use { response =>
-        EntityDecoder[F, ValidatedNec[AppErrorOutput, Unit]]
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, GameOutput]]
           .decode(response, strict = true)
           .value
           .map {

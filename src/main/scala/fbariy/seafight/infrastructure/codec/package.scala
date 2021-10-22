@@ -63,6 +63,9 @@ package object codec {
       AppErrorOutput("BACK_ALREADY_REQUESTED", "Возврат хода уже запрошен")
     case BackNotRequestedError =>
       AppErrorOutput("BACK_NOT_REQUESTED", "Возврат хода не был запрошен")
+    case InitiatorCannotAcceptBackError =>
+      AppErrorOutput("INITIATOR_CANNOT_ACCEPT_BACK",
+                     "Инициатор возврата не может принять его")
   }
 
   private val authErrorToJson: PartialFunction[AuthError, AppErrorOutput] = {
