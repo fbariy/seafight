@@ -25,6 +25,7 @@ import fbariy.seafight.application.invite.{
   CreateInviteHandler,
   CreateInviteValidator
 }
+import fbariy.seafight.application.notification.ReleaseNotificationsHandler
 import fbariy.seafight.application.ship.{AddShipsHandler, AddShipsValidator}
 import fbariy.seafight.infrastructure.config.{AppConfig, DBConfig}
 import fbariy.seafight.infrastructure.endpoint._
@@ -106,8 +107,11 @@ object GameServer {
                                                 bus,
                                                 acceptBackSemaphore)
 
-      preparationEndpoints = new PreparationEndpoints[F]
-      gameEndpoints        = new GameEndpoints[F]
+      releaseNotificationsHdlr = new ReleaseNotificationsHandler[F](bus)
+
+      preparationEndpoints   = new PreparationEndpoints[F]
+      gameEndpoints          = new GameEndpoints[F]
+      notificationsEndpoints = new NotificationEndpoints[F]
 
       httpApp = Router[F](
         "api/v1/preparation" -> (
@@ -122,7 +126,10 @@ object GameServer {
             withGame(gameRepo)(gameEndpoints.backToMove(backToMoveHdlr)) <+>
             withGame(gameRepo)(gameEndpoints.cancelBack(cancelBackHdlr)) <+>
             withGame(gameRepo)(gameEndpoints.acceptBack(acceptBackHdlr))
-        )
+        ),
+        "api/v1/notification" ->
+          withInvite(inviteRepo)(
+            notificationsEndpoints.release(releaseNotificationsHdlr))
       )
 
       finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(

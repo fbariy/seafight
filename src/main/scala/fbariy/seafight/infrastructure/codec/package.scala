@@ -7,10 +7,14 @@ import fbariy.seafight.application.AppErrorOutput
 import fbariy.seafight.application.error._
 import fbariy.seafight.application.game.{GameOutput, TurnOutput}
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
+import fbariy.seafight.application.notification._
 import fbariy.seafight.application.ship.AddShipsOutput
 import fbariy.seafight.domain._
+import fbariy.seafight.infrastructure.codec.NotificationCodes._
 import io.circe._
 import io.circe.generic.semiauto._
+
+import java.util.UUID
 
 package object codec {
   implicit val playerDecoder: Decoder[Player] =
@@ -108,4 +112,79 @@ package object codec {
         case Right(_ -> errors) =>
           Decoder[NonEmptyChain[E]].decodeJson(errors).map(_.invalid)
     }
+
+  implicit val notificationDecoder: Decoder[AppNotification] =
+    (c: HCursor) =>
+      for {
+        code <- c.get[String]("code")
+        notification <- code match {
+          case BackRequested =>
+            for {
+              initiator <- c.get[Player]("initiator")
+              gameId    <- c.get[UUID]("gameId")
+              move      <- c.get[TurnOutput]("move")
+            } yield BackRequestedNotification(initiator, gameId, move)
+          case BackAccepted =>
+            for {
+              initiator <- c.get[Player]("initiator")
+              gameId    <- c.get[UUID]("gameId")
+            } yield BackAcceptedNotification(initiator, gameId)
+          case BackCanceled =>
+            for {
+              initiator <- c.get[Player]("initiator")
+              gameId    <- c.get[UUID]("gameId")
+            } yield BackCanceledNotification(initiator, gameId)
+          case MoveMade =>
+            for {
+              initiator <- c.get[Player]("initiator")
+              gameId    <- c.get[UUID]("gameId")
+            } yield MoveMadeNotification(initiator, gameId)
+          case _ =>
+            Either.left[DecodingFailure, AppNotification](
+              DecodingFailure(s"Not support notification code '$code'",
+                              List.empty))
+        }
+      } yield notification
+  implicit val notificationEncoder: Encoder[AppNotification] = {
+    case n @ BackRequestedNotification(initiator, gameId, move) =>
+      Json.obj(
+        "code"      -> Json.fromString(instanceToCode(n)),
+        "initiator" -> Encoder[Player].apply(initiator),
+        "gameId"    -> Encoder[UUID].apply(gameId),
+        "move"      -> Encoder[TurnOutput].apply(move)
+      )
+    case n @ BackAcceptedNotification(initiator, gameId) =>
+      Json.obj(
+        "code"      -> Json.fromString(instanceToCode(n)),
+        "initiator" -> Encoder[Player].apply(initiator),
+        "gameId"    -> Encoder[UUID].apply(gameId)
+      )
+    case n @ BackCanceledNotification(initiator, gameId) =>
+      Json.obj(
+        "code"      -> Json.fromString(instanceToCode(n)),
+        "initiator" -> Encoder[Player].apply(initiator),
+        "gameId"    -> Encoder[UUID].apply(gameId)
+      )
+    case n @ MoveMadeNotification(initiator, gameId) =>
+      Json.obj(
+        "code"      -> Json.fromString(instanceToCode(n)),
+        "initiator" -> Encoder[Player].apply(initiator),
+        "gameId"    -> Encoder[UUID].apply(gameId)
+      )
+  }
+
+  object NotificationCodes {
+    def instanceToCode(notification: AppNotification): String =
+      notification match {
+        case BackRequestedNotification(_, _, _) => BackRequested
+        case BackAcceptedNotification(_, _)     => BackAccepted
+        case BackCanceledNotification(_, _)     => BackCanceled
+        case MoveMadeNotification(_, _)         => MoveMade
+      }
+
+    val BackRequested = "BACK_REQUESTED"
+    val BackAccepted  = "BACK_ACCEPTED"
+    val BackCanceled  = "BACK_CANCELED"
+    val MoveMade      = "MOVE_MADE"
+  }
 }
