@@ -6,7 +6,10 @@ import cats.effect.{Concurrent, Sync}
 import cats.implicits._
 import fbariy.seafight.application.back.BackToMoveValidator
 import fbariy.seafight.application.error.AppError
-import fbariy.seafight.application.notification.{MoveMadeNotification, NotificationBus}
+import fbariy.seafight.application.notification.{
+  MoveMadeNotification,
+  NotificationBus
+}
 import fbariy.seafight.domain.Cell
 import fbariy.seafight.infrastructure.PlayerWithGame
 
@@ -27,6 +30,8 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
           for {
             _ <- gameRepository.updateGame(updatedCtx.game)
             _ <- bus.enqueue(
+              updatedCtx.game.id,
+              updatedCtx,
               MoveMadeNotification(updatedCtx.p, updatedCtx.game.id))
           } yield updatedCtx
         }

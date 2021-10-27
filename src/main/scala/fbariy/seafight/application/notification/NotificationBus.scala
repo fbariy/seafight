@@ -1,7 +1,13 @@
 package fbariy.seafight.application.notification
 
+import fbariy.seafight.infrastructure.PlayerContext
+
+import java.util.UUID
+
 trait NotificationBus[F[_]] {
-  def enqueue(notification: AppNotification): F[Boolean]
-  def dequeue: F[Option[AppNotification]]
-  def dequeueAll: F[List[AppNotification]]
+  def enqueue(gameId: UUID,
+              ctx: PlayerContext,
+              notification: AppNotification): F[Unit]
+  def dequeueAll(gameId: UUID,
+                 ctx: PlayerContext): F[Option[List[AppNotification]]]
 }

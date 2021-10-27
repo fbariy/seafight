@@ -28,11 +28,20 @@ package object endpoint {
     new InviteAuth[F](inviteRepo).middleware(routes)
 }
 
-case class PlayerWithInvite(p: Player, invite: Invite)
-case class PlayerWithGame(p: Player,
-                          opp: Player,
-                          isFirstPlayer: Boolean,
+abstract class PlayerContext(val p: Player,
+                             val opp: Player,
+                             val isFirst: Boolean)
+
+case class PlayerWithInvite(override val p: Player,
+                            override val opp: Player,
+                            override val isFirst: Boolean,
+                            invite: Invite)
+    extends PlayerContext(p, opp, isFirst)
+case class PlayerWithGame(override val p: Player,
+                          override val opp: Player,
+                          override val isFirst: Boolean,
                           game: GameWithPlayers)
+    extends PlayerContext(p, opp, isFirst)
 object PlayerWithGame {
   implicit class PlayerWithGameOps(playerCtx: PlayerWithGame) {
     def updateMoves(moves: Seq[Turn]): PlayerWithGame =
@@ -167,7 +176,12 @@ private class InviteAuth[F[_]: Monad](inviteRepo: InviteRepository[F])
         inviteRepo
           .findByIdAndPlayer(id, p)
           .map(
-            _.map(PlayerWithInvite(p, _))
-              .toRight(NotFoundInviteError))
+            _.map { invite =>
+              val isFirstPlayer = p == invite.p1
+              val opp           = if (isFirstPlayer) p else invite.p2
+
+              PlayerWithInvite(p, opp, isFirstPlayer, invite)
+            }.toRight(NotFoundInviteError)
+          )
     }
 }

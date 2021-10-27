@@ -31,6 +31,8 @@ class BackToMoveHandler[F[_]: Sync](
           for {
             _ <- backToMoveRepository.add(game.id, playerCtx.p, turn)
             _ <- bus.enqueue(
+              game.id,
+              playerCtx,
               BackRequestedNotification(playerCtx.p, game.id, TurnOutput(turn)))
           } yield ()
         }

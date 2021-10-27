@@ -18,7 +18,8 @@ class AcceptBackHandler[F[_]: Monad](validator: BackToMoveValidator[F],
                                      gameRepository: GameRepository[F],
                                      bus: NotificationBus[F],
                                      semaphore: Semaphore[F]) {
-  def handle(played: F[PlayerWithGame]): F[ValidatedNec[AppError, GameOutput]] = {
+  def handle(
+      played: F[PlayerWithGame]): F[ValidatedNec[AppError, GameOutput]] = {
     def accept: F[ValidatedNec[AppError, GameOutput]] =
       for {
         playerCtx     <- played
@@ -32,7 +33,9 @@ class AcceptBackHandler[F[_]: Monad](validator: BackToMoveValidator[F],
           for {
             _ <- gameRepository.updateGame(game)
             _ <- backRepository.release(game.id)
-            _ <- bus.enqueue(BackAcceptedNotification(updatedCtx.p, game.id))
+            _ <- bus.enqueue(game.id,
+                             updatedCtx,
+                             BackAcceptedNotification(updatedCtx.p, game.id))
           } yield GameOutput(updatedCtx)
         }
       } yield result

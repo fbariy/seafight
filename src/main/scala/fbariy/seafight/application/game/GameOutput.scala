@@ -14,7 +14,7 @@ object GameOutput {
     GameOutput(
       played.p,
       played.opp,
-      if (played.isFirstPlayer) played.game.p1Ships else played.game.p2Ships,
+      if (played.isFirst) played.game.p1Ships else played.game.p2Ships,
       played.game.playerTurns(played.p).map(TurnOutput(_)),
       played.game.playerTurns(played.opp).map(TurnOutput(_)),
       played.game.winner
