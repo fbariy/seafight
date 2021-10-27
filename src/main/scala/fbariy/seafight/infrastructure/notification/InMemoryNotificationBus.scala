@@ -24,13 +24,11 @@ final class InMemoryNotificationBus[F[_]: Sync] extends NotificationBus[F] {
       notificationQueues.updateWith(gameId) {
         case Some(p1Queue -> p2Queue) =>
           Some(
-            if (ctx.isFirst) (p1Queue.enqueue(notification), p2Queue)
-            else (p1Queue, p2Queue.enqueue(notification))
+            p1Queue.enqueue(notification) -> p2Queue.enqueue(notification)
           )
         case None =>
           Some(
-            if (ctx.isFirst) (Queue(notification), Queue.empty)
-            else (Queue.empty, Queue(notification))
+            Queue(notification) -> Queue(notification)
           )
       }
       ()
