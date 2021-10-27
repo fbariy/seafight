@@ -32,7 +32,7 @@ class MoveHandler[F[_]: Concurrent](gameRepository: GameRepository[F],
             _ <- bus.enqueue(
               updatedCtx.game.id,
               updatedCtx,
-              MoveMadeNotification(updatedCtx.p, updatedCtx.game.id))
+              MoveMadeNotification(updatedCtx.p, updatedCtx.game.id, kick))
           } yield updatedCtx
         }
       } yield validated.map(GameOutput(_))

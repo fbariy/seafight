@@ -138,7 +138,8 @@ package object codec {
             for {
               initiator <- c.get[Player]("initiator")
               gameId    <- c.get[UUID]("gameId")
-            } yield MoveMadeNotification(initiator, gameId)
+              kick      <- c.get[Cell]("kick")
+            } yield MoveMadeNotification(initiator, gameId, kick)
           case _ =>
             Either.left[DecodingFailure, AppNotification](
               DecodingFailure(s"Not support notification code '$code'",
@@ -165,11 +166,12 @@ package object codec {
         "initiator" -> Encoder[Player].apply(initiator),
         "gameId"    -> Encoder[UUID].apply(gameId)
       )
-    case n @ MoveMadeNotification(initiator, gameId) =>
+    case n @ MoveMadeNotification(initiator, gameId, kick) =>
       Json.obj(
         "code"      -> Json.fromString(instanceToCode(n)),
         "initiator" -> Encoder[Player].apply(initiator),
-        "gameId"    -> Encoder[UUID].apply(gameId)
+        "gameId"    -> Encoder[UUID].apply(gameId),
+        "kick"      -> Encoder[Cell].apply(kick)
       )
   }
 
@@ -179,7 +181,7 @@ package object codec {
         case BackRequestedNotification(_, _, _) => BackRequested
         case BackAcceptedNotification(_, _)     => BackAccepted
         case BackCanceledNotification(_, _)     => BackCanceled
-        case MoveMadeNotification(_, _)         => MoveMade
+        case MoveMadeNotification(_, _, _)      => MoveMade
       }
 
     val BackRequested = "BACK_REQUESTED"

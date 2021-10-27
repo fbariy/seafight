@@ -7,6 +7,7 @@ import cats.implicits._
 import fbariy.seafight.application.AppErrorOutput
 import fbariy.seafight.application.game.GameOutput
 import fbariy.seafight.application.invite.{CreateInviteInput, InviteOutput}
+import fbariy.seafight.application.notification.AppNotification
 import fbariy.seafight.application.ship.AddShipsOutput
 import fbariy.seafight.domain.{Cell, Player}
 import fbariy.seafight.infrastructure.codec._
@@ -183,6 +184,26 @@ class SeafightClient[F[_]: Applicative: Sync: Bracket[*[_], Throwable]](
       )
       .use { response =>
         EntityDecoder[F, ValidatedNec[AppErrorOutput, Unit]]
+          .decode(response, strict = true)
+          .value
+          .map {
+            case Left(failure)    => throw failure
+            case Right(validated) => validated -> response
+          }
+      }
+
+  def release(inviteId: UUID,
+              p: Player): F[(List[AppNotification], Response[F])] =
+    httpClient
+      .run(
+        Request[F](
+          POST,
+          baseUri / "api" / "v1" / "notification" / "release",
+          headers = Headers(Header.Raw(ci"InviteId", inviteId.toString),
+                            Header.Raw(ci"Player", p.name))
+        ))
+      .use { response =>
+        EntityDecoder[F, List[AppNotification]]
           .decode(response, strict = true)
           .value
           .map {
