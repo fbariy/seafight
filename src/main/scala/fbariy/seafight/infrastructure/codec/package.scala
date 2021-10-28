@@ -140,6 +140,15 @@ package object codec {
               gameId    <- c.get[UUID]("gameId")
               kick      <- c.get[Cell]("kick")
             } yield MoveMadeNotification(initiator, gameId, kick)
+          case ShipsAdded =>
+            for {
+              initiator <- c.get[Player]("initiator")
+              gameId    <- c.get[UUID]("gameId")
+            } yield ShipsAddedNotification(initiator, gameId)
+          case GameCreated =>
+            for {
+              gameId <- c.get[UUID]("gameId")
+            } yield GameCreatedNotification(gameId)
           case _ =>
             Either.left[DecodingFailure, AppNotification](
               DecodingFailure(s"Not support notification code '$code'",
@@ -173,6 +182,17 @@ package object codec {
         "gameId"    -> Encoder[UUID].apply(gameId),
         "kick"      -> Encoder[Cell].apply(kick)
       )
+    case n @ ShipsAddedNotification(initiator, gameId) =>
+      Json.obj(
+        "code"      -> Json.fromString(instanceToCode(n)),
+        "initiator" -> Encoder[Player].apply(initiator),
+        "gameId"    -> Encoder[UUID].apply(gameId)
+      )
+    case n @ GameCreatedNotification(gameId) =>
+      Json.obj(
+        "code"   -> Json.fromString(instanceToCode(n)),
+        "gameId" -> Encoder[UUID].apply(gameId)
+      )
   }
 
   object NotificationCodes {
@@ -182,11 +202,15 @@ package object codec {
         case BackAcceptedNotification(_, _)     => BackAccepted
         case BackCanceledNotification(_, _)     => BackCanceled
         case MoveMadeNotification(_, _, _)      => MoveMade
+        case ShipsAddedNotification(_, _)       => ShipsAdded
+        case GameCreatedNotification(_)         => GameCreated
       }
 
     val BackRequested = "BACK_REQUESTED"
     val BackAccepted  = "BACK_ACCEPTED"
     val BackCanceled  = "BACK_CANCELED"
     val MoveMade      = "MOVE_MADE"
+    val ShipsAdded    = "SHIPS_ADDED"
+    val GameCreated   = "GAME_CREATED"
   }
 }

@@ -15,6 +15,12 @@ package object notification {
       extends AppNotification
   final case class BackCanceledNotification(initiator: Player, gameId: UUID)
       extends AppNotification
-  final case class MoveMadeNotification(initiator: Player, gameId: UUID, kick: Cell)
+  final case class MoveMadeNotification(initiator: Player,
+                                        gameId: UUID,
+                                        kick: Cell)
       extends AppNotification
+  final case class ShipsAddedNotification(initiator: Player, gameId: UUID)
+      extends AppNotification
+
+  final case class GameCreatedNotification(gameId: UUID) extends AppNotification
 }

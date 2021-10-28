@@ -69,6 +69,7 @@ object GameServer {
         new InMemoryShipsRepository[F],
         new DoobieGameRepository[F](transactor),
         new AddShipsValidator[F](gameRepo),
+        bus,
         addShipsSemaphore
       )
       createInviteHdlr = new CreateInviteHandler[F](

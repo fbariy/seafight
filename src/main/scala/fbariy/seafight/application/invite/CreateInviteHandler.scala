@@ -1,6 +1,5 @@
 package fbariy.seafight.application.invite
 
-import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNec
 import cats.effect.Sync
 import cats.implicits._
@@ -9,8 +8,8 @@ import fbariy.seafight.domain.{Invite, Player}
 
 import java.util.UUID
 
-class CreateInviteHandler[F[_]: Sync](validator: CreateInviteValidator,
-                                      inviteRepo: InviteRepository[F]) {
+final class CreateInviteHandler[F[_]: Sync](validator: CreateInviteValidator,
+                                            inviteRepo: InviteRepository[F]) {
   def handle(
       input: CreateInviteInput): F[ValidatedNec[AppError, InviteOutput]] = {
     val trimmedInput = CreateInviteInput(Player(input.player1.name.trim),
