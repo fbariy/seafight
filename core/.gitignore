@@ -1,8 +1,4 @@
 target
 project/target
 project/project
-.idea
 .bsp
-.cache
-.sbt
-.ivy2
