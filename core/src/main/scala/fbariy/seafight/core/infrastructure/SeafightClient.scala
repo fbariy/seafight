@@ -39,7 +39,8 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           }
       }
 
-  def createInvite(input: CreateInviteInput)
+  @deprecated(s"use createInvite or createInviteWithReponse")
+  def createInviteThrowable(input: CreateInviteInput)
     : F[(ValidatedNec[AppErrorOutput, InviteOutput], Response[F])] =
     httpClient
       .run(
@@ -57,7 +58,7 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           }
       }
 
-  def createInviteBase(input: CreateInviteInput)
+  def createInviteWithResponse(input: CreateInviteInput)
     : F[Either[(DecodeFailure, Response[F]),
                (ValidatedNec[AppErrorOutput, InviteOutput], Response[F])]] =
     httpClient
@@ -76,16 +77,17 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           }
       }
 
-  def createInviteWithDecodeFailureInErrors(
+  def createInvite(
       input: CreateInviteInput): F[ValidatedNec[AppErrorOutput, InviteOutput]] =
-    createInviteBase(input).map {
+    createInviteWithResponse(input).map {
       case Left(failure -> _) =>
         AppErrorOutput("DECODE_FAILURE", failure.message)
           .invalidNec[InviteOutput]
       case Right(validated -> _) => validated
     }
 
-  def addShips(inviteId: UUID, p: Player)(ships: Seq[Cell])
+  @deprecated("use addShips or addShipsWithResponse")
+  def addShipsThrowable(inviteId: UUID, p: Player)(ships: Seq[Cell])
     : F[(ValidatedNec[AppErrorOutput, AddShipsOutput], Response[F])] =
     httpClient
       .run(
@@ -106,7 +108,7 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           }
       }
 
-  def addShipsBase(inviteId: UUID, p: Player)(ships: Seq[Cell])
+  def addShipsWithResponse(inviteId: UUID, p: Player)(ships: Seq[Cell])
     : F[Either[(DecodeFailure, Response[F]),
                (ValidatedNec[AppErrorOutput, AddShipsOutput], Response[F])]] =
     httpClient
@@ -129,9 +131,9 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
       }
 
   //todo: заменить Seq => Set
-  def addShipsWithDecodeFailureInErrors(inviteId: UUID, p: Player)(
+  def addShips(inviteId: UUID, p: Player)(
       ships: Seq[Cell]): F[ValidatedNec[AppErrorOutput, AddShipsOutput]] =
-    addShipsBase(inviteId, p)(ships).map {
+    addShipsWithResponse(inviteId, p)(ships).map {
       case Left(failure -> _) =>
         decodeFailure(failure.message).invalidNec[AddShipsOutput]
       case Right(validated -> _) => validated
@@ -162,9 +164,8 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           }
       }
 
-  def getGame(
-      gameId: UUID,
-      p: Player): F[(ValidatedNec[AppErrorOutput, GameOutput], Response[F])] = {
+  def getGame(gameId: UUID,
+              p: Player): F[ValidatedNec[AppErrorOutput, GameOutput]] = {
     httpClient
       .run(
         Request[F](
@@ -179,8 +180,9 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           .decode(response, strict = true)
           .value
           .map {
-            case Left(failure)    => throw failure
-            case Right(validated) => validated -> response
+            case Left(failure) =>
+              decodeFailure(failure.message).invalidNec[GameOutput]
+            case Right(validated) => validated
           }
       }
   }
@@ -250,8 +252,9 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
           }
       }
 
-  def release(inviteId: UUID,
-              p: Player): F[(List[AppNotification], Response[F])] =
+  def release(
+      inviteId: UUID,
+      p: Player): F[ValidatedNec[AppErrorOutput, List[AppNotification]]] =
     httpClient
       .run(
         Request[F](
@@ -261,12 +264,13 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
                             Header.Raw(ci"Player", p.name))
         ))
       .use { response =>
-        EntityDecoder[F, List[AppNotification]]
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, List[AppNotification]]]
           .decode(response, strict = true)
           .value
           .map {
-            case Left(failure)    => throw failure
-            case Right(validated) => validated -> response
+            case Left(failure) =>
+              decodeFailure(failure.message).invalidNec[List[AppNotification]]
+            case Right(validated) => validated
           }
       }
 }

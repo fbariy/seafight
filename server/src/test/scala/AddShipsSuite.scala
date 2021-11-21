@@ -44,12 +44,12 @@ class AddShipsSuite extends AppSuite {
       )
 
     for {
-      ex.suc(invite) -> _ <- appClient.createInvite(
+      ex.suc(invite) -> _ <- appClient.createInviteThrowable(
         application.CreateInviteInput(Player("beZZdar"), Player("Hoho")))
 
-      ex.errFirst(err1) -> _ <- appClient.addShips(invite.id, invite.player1)(
+      ex.errFirst(err1) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
         state1.getOrElse(fail("state must be valid")).ships)
-      ex.errFirst(err2) -> _ <- appClient.addShips(invite.id, invite.player1)(
+      ex.errFirst(err2) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
         state2.getOrElse(fail("state must be valid")).ships)
     } yield {
       assertEquals(err1.code, "NOT_CORRECT_SHIPS")
@@ -59,12 +59,12 @@ class AddShipsSuite extends AppSuite {
 
   test("Player can to add ships") {
     for {
-      ex.suc(invite) -> _ <- appClient.createInvite(
+      ex.suc(invite) -> _ <- appClient.createInviteThrowable(
         application.CreateInviteInput(Player("beZZdar"), Player("Hoho")))
 
       state = PlayerState.fromString.getOrElse(fail("state must be valid"))
 
-      ex.suc(output) -> _ <- appClient.addShips(invite.id, invite.player1)(
+      ex.suc(output) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
         state.ships)
     } yield assertEquals(output.ships, state.ships)
   }
@@ -74,7 +74,7 @@ class AddShipsSuite extends AppSuite {
       val state = PlayerState.fromString.getOrElse(fail("state must be valid"))
 
       for {
-        ex.errFirst(err) -> _ <- appClient.addShips(invite.id, invite.player1)(
+        ex.errFirst(err) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
           state.ships)
       } yield assertEquals(err.code, "GAME_ALREADY_EXIST")
   }
@@ -82,14 +82,14 @@ class AddShipsSuite extends AppSuite {
   test(
     "When trying add ships to another player concurrently, only one will be successfully") {
     for {
-      ex.suc(invite) -> _ <- appClient.createInvite(
+      ex.suc(invite) -> _ <- appClient.createInviteThrowable(
         application.CreateInviteInput(Player("beZZdar"), Player("Hoho")))
 
       state = PlayerState.fromString.getOrElse(fail("state must be valid"))
 
-      _ <- appClient.addShips(invite.id, invite.player1)(state.ships)
+      _ <- appClient.addShipsThrowable(invite.id, invite.player1)(state.ships)
 
-      addShipsAction = appClient.addShips(invite.id, invite.player2)(
+      addShipsAction = appClient.addShipsThrowable(invite.id, invite.player2)(
         state.ships)
 
       seqValidated <- Seq(addShipsAction, addShipsAction, addShipsAction).parSequence

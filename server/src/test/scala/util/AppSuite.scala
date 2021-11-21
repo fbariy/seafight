@@ -72,12 +72,12 @@ trait AppSuite
           case Right(states) => states
         }
 
-        ex.suc(invite) -> _ <- appClient.createInvite(
+        ex.suc(invite) -> _ <- appClient.createInviteThrowable(
           CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
 
         _ <- (
-          appClient.addShips(invite.id, Player("VooDooSh"))(p1State.ships),
-          appClient.addShips(invite.id, Player("twaryna"))(p2State.ships),
+          appClient.addShipsThrowable(invite.id, Player("VooDooSh"))(p1State.ships),
+          appClient.addShipsThrowable(invite.id, Player("twaryna"))(p2State.ships),
         ).tupled
 
         _ <- combineThroughOne(
