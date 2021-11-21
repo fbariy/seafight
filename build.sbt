@@ -21,18 +21,18 @@ ThisBuild / scalaVersion := "2.13.6"
 lazy val runMigrate = taskKey[Unit]("Migrates the database schema.")
 
 // for development purposes
-//lazy val experimental = project
-//  .settings(
-//    name := "seafight-experimental",
-//    Compile / mainClass := Some("fbariy.seafight.experimental.Main"),
-//    libraryDependencies ++= Seq(
-//      "org.typelevel"         %% "cats-effect"         % "3.2.9",
-//    ),
-//    addCompilerPlugin(
-//      "org.typelevel" %% "kind-projector" % KindProjectorVersion cross CrossVersion.full),
-//    addCompilerPlugin(
-//      "com.olegpy" %% "better-monadic-for" % BetterMonadicForVersion)
-//  )
+lazy val experimental = project
+  .settings(
+    name := "seafight-experimental",
+    Compile / mainClass := Some("fbariy.seafight.experimental.Main"),
+    libraryDependencies ++= Seq(
+      "org.typelevel"         %% "cats-effect"         % "3.2.9",
+    ),
+    addCompilerPlugin(
+      "org.typelevel" %% "kind-projector" % KindProjectorVersion cross CrossVersion.full),
+    addCompilerPlugin(
+      "com.olegpy" %% "better-monadic-for" % BetterMonadicForVersion)
+  )
 
 lazy val core = project
   .settings(
