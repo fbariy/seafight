@@ -5,5 +5,5 @@ import cats.effect.{ExitCode, IO, IOApp}
 
 object Main extends IOApp {
   def run(args: List[String]): IO[ExitCode] =
-    IO.delay(println("Hello new client app")).as(ExitCode.Success)
+    new GameClient[IO].resource.use(_ => IO.unit).as(ExitCode.Success)
 }
