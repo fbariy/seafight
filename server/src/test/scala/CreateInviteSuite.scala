@@ -30,6 +30,4 @@ class CreateInviteSuite extends AppSuite {
       assertEquals(invite.player2, Player("Stinger"))
     }
   }
-
-  override def munitTimeout: Duration = new FiniteDuration(60, TimeUnit.SECONDS)
 }

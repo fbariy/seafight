@@ -273,4 +273,22 @@ class SeafightClient[F[_]: Concurrent](httpClient: Client[F],
             case Right(validated) => validated
           }
       }
+
+  def getInvite(inviteId: UUID,
+                p: Player): F[ValidatedNec[AppErrorOutput, InviteOutput]] =
+    httpClient
+      .run(
+        Request[F](GET,
+                   baseUri / "api" / "v1" / "preparation" / "invite",
+                   headers = Headers(Header.Raw(ci"InviteId", inviteId.toString),
+                                     Header.Raw(ci"Player", p.name))))
+      .use { response =>
+        EntityDecoder[F, ValidatedNec[AppErrorOutput, InviteOutput]]
+          .decode(response, strict = true)
+          .value
+          .map {
+            case Left(failure)    => decodeFailure(failure.message).invalidNec[InviteOutput]
+            case Right(validated) => validated
+          }
+      }
 }

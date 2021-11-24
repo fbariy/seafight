@@ -6,7 +6,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 case class GameOutput(player: Player,
                       opponent: Player,
-                      ships: Seq[Cell],
+                      ships: Seq[Cell], //todo: заменить на Set
                       playerTurns: Seq[TurnOutput],
                       opponentTurns: Seq[TurnOutput],
                       winner: Option[Player])

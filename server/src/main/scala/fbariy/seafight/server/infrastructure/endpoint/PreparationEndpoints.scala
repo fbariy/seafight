@@ -2,7 +2,7 @@ package fbariy.seafight.server.infrastructure.endpoint
 
 import cats.effect.kernel.Concurrent
 import cats.implicits._
-import fbariy.seafight.core.application.CreateInviteInput
+import fbariy.seafight.core.application.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.core.application.error.instances._
 import fbariy.seafight.core.domain.{Cell, PlayerWithInvite}
 import fbariy.seafight.core.infrastructure.codec._
@@ -26,11 +26,17 @@ class PreparationEndpoints[F[_]: Concurrent] extends Http4sDsl[F] {
 
   def addShips(handler: AddShipsHandler[F]): AuthedRoutes[PlayerWithInvite, F] =
     AuthedRoutes.of[PlayerWithInvite, F] {
-      case authReq @ POST -> Root / "ships" as invited =>
+      case authReq @ POST -> Root / "ships" as inviteCtx =>
         for {
           ships     <- authReq.req.as[Seq[Cell]]
-          validated <- handler.handle(ships, invited)
+          validated <- handler.handle(ships, inviteCtx)
           ok        <- Ok(validated)
         } yield ok
+    }
+
+  def getInvite: AuthedRoutes[PlayerWithInvite, F] =
+    AuthedRoutes.of[PlayerWithInvite, F] {
+      case GET -> Root / "invite" as inviteCtx =>
+        Ok(InviteOutput(inviteCtx.invite))
     }
 }

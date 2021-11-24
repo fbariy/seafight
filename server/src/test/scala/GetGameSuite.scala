@@ -38,12 +38,12 @@ class GetGameSuite extends AppSuite {
       PlayerState.fromString(rawState2).getOrElse(fail("state must be valid"))
 
     for {
-      ex.suc(p1Game) -> _ <- appClient.getGame(invite.id, invite.player1)
-      ex.suc(p2Game) -> _ <- appClient.getGame(invite.id, invite.player2)
+      ex.suc(p1Game) <- appClient.getGame(invite.id, invite.player1)
+      ex.suc(p2Game) <- appClient.getGame(invite.id, invite.player2)
 
       _ <- appClient.move(invite.id, invite.player1)(D \ `4`)
 
-      ex.suc(gameAfterOver) -> _ <- appClient.getGame(invite.id, invite.player1)
+      ex.suc(gameAfterOver) <- appClient.getGame(invite.id, invite.player1)
     } yield {
       assertEquals(p1Game.ships.toSet, state1.ships.toSet)
       assertEquals(p1Game.winner, None)

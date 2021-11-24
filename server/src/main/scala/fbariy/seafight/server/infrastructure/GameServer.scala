@@ -115,7 +115,8 @@ object GameServer {
         "api/v1/preparation" -> (
           preparationEndpoints.createInvite(createInviteHdlr) <+>
             withInvite(inviteRepo)(
-              preparationEndpoints.addShips(preparationHdlr))
+              preparationEndpoints.addShips(preparationHdlr)) <+>
+            withInvite(inviteRepo)(preparationEndpoints.getInvite)
         ),
         "api/v1/game" -> (
           withGame(gameRepo)(gameEndpoints.canMakeMove(canMoveHdlr)) <+>
