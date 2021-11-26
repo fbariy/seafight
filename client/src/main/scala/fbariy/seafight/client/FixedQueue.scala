@@ -12,8 +12,8 @@ trait FixedQueue[A] {
 }
 
 object FixedQueue {
-  def apply[A](size: Int, seq2: A*): FixedQueue[A] =
-    impl(size, seq2)
+  def apply[A](size: Int, elems: A*): FixedQueue[A] =
+    impl(size, elems)
 
   private def impl[A](size: Int, seq: Seq[A]): FixedQueue[A] =
     new FixedQueue[A] {
@@ -37,7 +37,6 @@ object FixedQueue {
       override def items: Seq[A] = queue
 
       override def enqueueAll(items: Seq[A]): FixedQueue[A] =
-        items.foldLeft(this: FixedQueue[A])((currentQueue, item) =>
-          currentQueue.enqueue(item))
+        items.foldLeft(this)((currentQueue, item) => currentQueue.enqueue(item))
     }
 }
