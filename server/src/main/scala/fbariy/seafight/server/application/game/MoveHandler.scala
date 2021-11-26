@@ -1,21 +1,21 @@
 package fbariy.seafight.server.application.game
 
 import cats.data.ValidatedNec
+import cats.effect.Sync
 import cats.effect.std.Semaphore
-import cats.effect.{Concurrent, Sync}
 import cats.implicits._
 import fbariy.seafight.core.application.GameOutput
-import fbariy.seafight.server.application.back.BackToMoveValidator
 import fbariy.seafight.core.application.error.AppError
 import fbariy.seafight.core.application.notification._
-import fbariy.seafight.server.application.notification.NotificationBus
 import fbariy.seafight.core.domain.{Cell, PlayerWithGame}
+import fbariy.seafight.server.application.back.BackToMoveValidator
+import fbariy.seafight.server.application.notification.NotificationBus
 
 class MoveHandler[F[_]: Sync](gameRepository: GameRepository[F],
-                                    moveValidator: MoveValidator,
-                                    backValidator: BackToMoveValidator[F],
-                                    bus: NotificationBus[F],
-                                    semaphore: Semaphore[F]) {
+                              moveValidator: MoveValidator,
+                              backValidator: BackToMoveValidator[F],
+                              bus: NotificationBus[F],
+                              semaphore: Semaphore[F]) {
   def handle(played: F[PlayerWithGame],
              kick: Cell): F[ValidatedNec[AppError, GameOutput]] = {
     def makeMove: F[ValidatedNec[AppError, GameOutput]] =

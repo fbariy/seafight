@@ -1,6 +1,6 @@
 package fbariy.seafight.server.application.game
 
-import fbariy.seafight.core.domain.{Game, GameWithPlayers, Player, Turn}
+import fbariy.seafight.core.domain.{Game, GameWithPlayers, Player}
 
 import java.util.UUID
 

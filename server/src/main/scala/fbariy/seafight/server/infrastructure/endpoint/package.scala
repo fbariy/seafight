@@ -5,7 +5,12 @@ import cats.data.{Kleisli, OptionT}
 import cats.implicits._
 import fbariy.seafight.core.application.error._
 import fbariy.seafight.core.application.error.instances._
-import fbariy.seafight.core.domain.{GameWithPlayers, Player, PlayerWithGame, PlayerWithInvite}
+import fbariy.seafight.core.domain.{
+  GameWithPlayers,
+  Player,
+  PlayerWithGame,
+  PlayerWithInvite
+}
 import fbariy.seafight.core.infrastructure.codec._
 import fbariy.seafight.server.application.game.GameRepository
 import fbariy.seafight.server.application.invite.InviteRepository
@@ -28,7 +33,6 @@ package object endpoint {
   ): HttpRoutes[F] =
     new InviteAuth[F](inviteRepo).middleware(routes)
 }
-
 
 abstract class AbstractAuth[F[_]: Monad, V, R] {
   protected def validate(req: Request[F]): Either[AuthError, V]
@@ -156,7 +160,7 @@ private class InviteAuth[F[_]: Monad](inviteRepo: InviteRepository[F])
           .map(
             _.map { invite =>
               val isFirstPlayer = p == invite.p1
-              val opp           = if (isFirstPlayer) p else invite.p2
+              val opp           = if (isFirstPlayer) invite.p2 else p
 
               PlayerWithInvite(p, opp, isFirstPlayer, invite)
             }.toRight(NotFoundInviteError)

@@ -6,6 +6,7 @@ import fbariy.seafight.core.application.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.core.application.error.instances._
 import fbariy.seafight.core.domain.{Cell, PlayerWithInvite}
 import fbariy.seafight.core.infrastructure.codec._
+import fbariy.seafight.server.application.canplay.CanPlayHandler
 import fbariy.seafight.server.application.invite.CreateInviteHandler
 import fbariy.seafight.server.application.ship.AddShipsHandler
 import org.http4s.circe.CirceEntityDecoder._
@@ -38,5 +39,14 @@ class PreparationEndpoints[F[_]: Concurrent] extends Http4sDsl[F] {
     AuthedRoutes.of[PlayerWithInvite, F] {
       case GET -> Root / "invite" as inviteCtx =>
         Ok(InviteOutput(inviteCtx.invite))
+    }
+
+  def canPlay(handler: CanPlayHandler[F]): AuthedRoutes[PlayerWithInvite, F] =
+    AuthedRoutes.of[PlayerWithInvite, F] {
+      case POST -> Root / "can-play" as inviteCtx =>
+        for {
+          validated <- handler.handle(inviteCtx)
+          response <- Ok(validated)
+        } yield response
     }
 }

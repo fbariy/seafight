@@ -4,6 +4,7 @@ import util.AppSuite
 import cats.implicits._
 import fbariy.seafight.core.application
 import fbariy.seafight.core.application.CreateInviteInput
+import fbariy.seafight.core.application.error._
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -44,27 +45,27 @@ class AddShipsSuite extends AppSuite {
       )
 
     for {
-      ex.suc(invite) -> _ <- appClient.createInviteThrowable(
+      ex.suc(invite) <- appClient.createInvite(
         application.CreateInviteInput(Player("beZZdar"), Player("Hoho")))
 
-      ex.errFirst(err1) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
+      ex.errFirst(err1) <- appClient.addShips(invite.id, invite.player1)(
         state1.getOrElse(fail("state must be valid")).ships)
-      ex.errFirst(err2) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
+      ex.errFirst(err2) <- appClient.addShips(invite.id, invite.player1)(
         state2.getOrElse(fail("state must be valid")).ships)
     } yield {
-      assertEquals(err1.code, "NOT_CORRECT_SHIPS")
-      assertEquals(err2.code, "NOT_CORRECT_SHIPS")
+      assert(err1.isInstanceOf[NotCorrectShipsError])
+      assert(err2.isInstanceOf[NotCorrectShipsError])
     }
   }
 
   test("Player can to add ships") {
     for {
-      ex.suc(invite) -> _ <- appClient.createInviteThrowable(
+      ex.suc(invite) <- appClient.createInvite(
         application.CreateInviteInput(Player("beZZdar"), Player("Hoho")))
 
       state = PlayerState.fromString.getOrElse(fail("state must be valid"))
 
-      ex.suc(output) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
+      ex.suc(output) <- appClient.addShips(invite.id, invite.player1)(
         state.ships)
     } yield assertEquals(output.ships, state.ships)
   }
@@ -74,25 +75,25 @@ class AddShipsSuite extends AppSuite {
       val state = PlayerState.fromString.getOrElse(fail("state must be valid"))
 
       for {
-        ex.errFirst(err) -> _ <- appClient.addShipsThrowable(invite.id, invite.player1)(
+        ex.errFirst(err) <- appClient.addShips(invite.id, invite.player1)(
           state.ships)
-      } yield assertEquals(err.code, "GAME_ALREADY_EXIST")
+      } yield assert(err.isInstanceOf[GameAlreadyExistError.type])
   }
 
   test(
     "When trying add ships to another player concurrently, only one will be successfully") {
     for {
-      ex.suc(invite) -> _ <- appClient.createInviteThrowable(
+      ex.suc(invite) <- appClient.createInvite(
         application.CreateInviteInput(Player("beZZdar"), Player("Hoho")))
 
       state = PlayerState.fromString.getOrElse(fail("state must be valid"))
 
-      _ <- appClient.addShipsThrowable(invite.id, invite.player1)(state.ships)
+      _ <- appClient.addShips(invite.id, invite.player1)(state.ships)
 
-      addShipsAction = appClient.addShipsThrowable(invite.id, invite.player2)(
+      addShipsAction = appClient.addShips(invite.id, invite.player2)(
         state.ships)
 
       seqValidated <- Seq(addShipsAction, addShipsAction, addShipsAction).parSequence
-    } yield assertEquals(seqValidated.count(_._1.isValid), 1)
+    } yield assertEquals(seqValidated.count(_.isValid), 1)
   }
 }

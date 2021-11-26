@@ -1,5 +1,6 @@
 import cats.implicits._
 import fbariy.seafight.core.application.TurnOutput
+import fbariy.seafight.core.application.error._
 import fbariy.seafight.core.domain.Digit._
 import fbariy.seafight.core.domain.Symbol._
 import util.AppSuite
@@ -11,18 +12,16 @@ class MoveSuite extends AppSuite {
   fixtures.defaultGame.test("Second player can't make a move on a new game") {
     invite =>
       for {
-        ex.errFirst(err) -> _ <- appClient.move(invite.id, invite.player2)(
-          A \ `1`)
-      } yield assert(err.code == "PLAYER_CANNOT_MAKE_MOVE")
+        ex.errFirst(err) <- appClient.move(invite.id, invite.player2)(A \ `1`)
+      } yield assert(err.isInstanceOf[PlayerCannotMakeMoveError])
   }
 
   fixtures.defaultGame.test("Players must to make moves alternately") {
     invite =>
       for {
         _ <- appClient.move(invite.id, invite.player1)(A \ `1`)
-        ex.suc(gameAfterSecondMove) -> _ <- appClient.move(
-          invite.id,
-          invite.player2)(A \ `2`)
+        ex.suc(gameAfterSecondMove) <- appClient.move(invite.id,
+                                                      invite.player2)(A \ `2`)
       } yield {
         assertEquals(gameAfterSecondMove.player, invite.player2)
         assertEquals(gameAfterSecondMove.opponent, invite.player1)
@@ -36,10 +35,9 @@ class MoveSuite extends AppSuite {
 
   fixtures.defaultGame.test("Player can't make a move twice") { invite =>
     for {
-      _ <- appClient.move(invite.id, invite.player1)(A \ `1`)
-      ex.errFirst(err) -> _ <- appClient.move(invite.id, invite.player1)(
-        B \ `2`)
-    } yield assert(err.code == "PLAYER_CANNOT_MAKE_MOVE")
+      _                <- appClient.move(invite.id, invite.player1)(A \ `1`)
+      ex.errFirst(err) <- appClient.move(invite.id, invite.player1)(B \ `2`)
+    } yield assert(err.isInstanceOf[PlayerCannotMakeMoveError])
   }
 
   fixtures
@@ -71,13 +69,12 @@ class MoveSuite extends AppSuite {
     )
     .test("Player can't make a move on game that over") { invite =>
       for {
-        ex.suc(gameAtLastMove) -> _ <- appClient.move(invite.id,
-                                                      invite.player1)(D \ `4`)
-        ex.errFirst(err) -> _ <- appClient.move(invite.id, invite.player2)(
-          A \ `1`)
+        ex.suc(gameAtLastMove) <- appClient.move(invite.id, invite.player1)(
+          D \ `4`)
+        ex.errFirst(err) <- appClient.move(invite.id, invite.player2)(A \ `1`)
       } yield {
         assertEquals(clue(gameAtLastMove.winner), clue(Some(invite.player1)))
-        assertEquals(clue(err.code), clue("GAME_OVER"))
+        assert(err.isInstanceOf[GameOverError])
       }
     }
 
@@ -90,17 +87,16 @@ class MoveSuite extends AppSuite {
           appClient.move(invite.id, invite.player1)(A \ `2`),
           appClient.move(invite.id, invite.player1)(A \ `3`),
         ).parSequence
-      } yield assertEquals(seqValidated.count(_._1.isValid), 1)
+      } yield assertEquals(seqValidated.count(_.isValid), 1)
   }
 
   fixtures.defaultGame.test(
     "Player can't make a move when back to move requested") { invite =>
     for {
-      _              <- appClient.move(invite.id, invite.player1)(A \ `1`)
-      ex.suc(_) -> _ <- appClient.backToMove(invite.id, invite.player1)(1)
-      ex.errFirst(err) -> _ <- appClient.move(invite.id, invite.player1)(
-        I \ `9`)
-    } yield assertEquals(err.code, "BACK_ALREADY_REQUESTED")
+      _                <- appClient.move(invite.id, invite.player1)(A \ `1`)
+      ex.suc(_)        <- appClient.backToMove(invite.id, invite.player1)(1)
+      ex.errFirst(err) <- appClient.move(invite.id, invite.player1)(I \ `9`)
+    } yield assert(err.isInstanceOf[BackAlreadyRequestedError.type])
   }
 
   override def munitTimeout: Duration =

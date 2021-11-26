@@ -2,13 +2,13 @@ import fbariy.seafight.core.domain.Digit._
 import fbariy.seafight.core.domain.Symbol._
 import util.AppSuite
 import cats.implicits._
+import fbariy.seafight.core.application.error._
 
 class BackToMoveSuite extends AppSuite {
   fixtures.defaultGame.test("Specified move must be exist") { invite =>
     for {
-      ex.errFirst(err) -> _ <- appClient.backToMove(invite.id, invite.player1)(
-        1000)
-    } yield assertEquals(err.code, "MOVE_IS_NOT_EXIST")
+      ex.errFirst(err) <- appClient.backToMove(invite.id, invite.player1)(1000)
+    } yield assert(err.isInstanceOf[MoveIsNotExistError.type])
   }
 
   fixtures.defaultGame.test("Only one back can be requested") { invite =>
@@ -16,10 +16,9 @@ class BackToMoveSuite extends AppSuite {
       _ <- appClient.move(invite.id, invite.player1)(A \ `1`)
       _ <- appClient.move(invite.id, invite.player2)(A \ `2`)
 
-      ex.suc(_) -> _ <- appClient.backToMove(invite.id, invite.player1)(1)
-      ex.errFirst(err) -> _ <- appClient.backToMove(invite.id, invite.player1)(
-        1)
-    } yield assertEquals(err.code, "BACK_ALREADY_REQUESTED")
+      ex.suc(_)        <- appClient.backToMove(invite.id, invite.player1)(1)
+      ex.errFirst(err) <- appClient.backToMove(invite.id, invite.player1)(1)
+    } yield assert(err.isInstanceOf[BackAlreadyRequestedError.type])
   }
 
   fixtures.defaultGame.test("Successfully requested back") { invite =>
@@ -27,7 +26,7 @@ class BackToMoveSuite extends AppSuite {
       _ <- appClient.move(invite.id, invite.player1)(A \ `1`)
       _ <- appClient.move(invite.id, invite.player2)(A \ `2`)
 
-      ex.suc(_) -> _ <- appClient.backToMove(invite.id, invite.player1)(1)
+      ex.suc(_) <- appClient.backToMove(invite.id, invite.player1)(1)
     } yield ()
   }
 
@@ -40,14 +39,14 @@ class BackToMoveSuite extends AppSuite {
         backToMove = appClient.backToMove(invite.id, invite.player1)(1)
 
         seqResults <- Seq(backToMove, backToMove, backToMove).parSequence
-      } yield assertEquals(seqResults.count(_._1.isValid), 1)
+      } yield assertEquals(seqResults.count(_.isValid), 1)
   }
 
   fixtures.defaultGame.test("Player can't cancel a not-existent back") {
     invite =>
       for {
-        ex.errFirst(err) -> _ <- appClient.cancelBack(invite.id, invite.player1)
-      } yield assertEquals(err.code, "BACK_NOT_REQUESTED")
+        ex.errFirst(err) <- appClient.cancelBack(invite.id, invite.player1)
+      } yield assert(err.isInstanceOf[BackNotRequestedError.type])
   }
 
   fixtures.defaultGame.test("Player can cancel an existing back") { invite =>
@@ -57,15 +56,15 @@ class BackToMoveSuite extends AppSuite {
 
       _ <- appClient.backToMove(invite.id, invite.player1)(1)
 
-      ex.suc(_) -> _ <- appClient.cancelBack(invite.id, invite.player1)
+      ex.suc(_) <- appClient.cancelBack(invite.id, invite.player1)
     } yield ()
   }
 
   fixtures.defaultGame.test("Player can't accept a not-existent back") {
     invite =>
       for {
-        ex.errFirst(err) -> _ <- appClient.acceptBack(invite.id, invite.player1)
-      } yield assertEquals(err.code, "BACK_NOT_REQUESTED")
+        ex.errFirst(err) <- appClient.acceptBack(invite.id, invite.player1)
+      } yield assert(err.isInstanceOf[BackNotRequestedError.type])
   }
 
   fixtures.defaultGame.test("Only opponent can accept back") { invite =>
@@ -75,8 +74,8 @@ class BackToMoveSuite extends AppSuite {
 
       _ <- appClient.backToMove(invite.id, invite.player1)(1)
 
-      ex.errFirst(err) -> _ <- appClient.acceptBack(invite.id, invite.player1)
-    } yield assertEquals(err.code, "INITIATOR_CANNOT_ACCEPT_BACK")
+      ex.errFirst(err) <- appClient.acceptBack(invite.id, invite.player1)
+    } yield assert(err.isInstanceOf[InitiatorCannotAcceptBackError.type])
   }
 
   fixtures.defaultGame.test("Opponent can accept back") { invite =>
@@ -86,10 +85,8 @@ class BackToMoveSuite extends AppSuite {
 
       _ <- appClient.backToMove(invite.id, invite.player1)(1)
 
-      ex.suc(game) -> _ <- appClient.acceptBack(invite.id, invite.player2)
+      ex.suc(game) <- appClient.acceptBack(invite.id, invite.player2)
     } yield
-      assert(
-        !(game.playerTurns ++ game.opponentTurns)
-          .exists(_.serial > 1))
+      assert(!(game.playerTurns ++ game.opponentTurns).exists(_.serial > 1))
   }
 }

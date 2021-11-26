@@ -19,6 +19,6 @@ class AddShipsValidator[F[_]: Functor](gameRepository: GameRepository[F]) {
       .find(inviteId)
       .map(
         gameOpt =>
-          if (gameOpt.isDefined) GameAlreadyExist.invalidNec[Unit]
-          else ().validNec[GameAlreadyExist.type])
+          if (gameOpt.isDefined) GameAlreadyExistError.invalidNec[Unit]
+          else ().validNec[GameAlreadyExistError.type])
 }

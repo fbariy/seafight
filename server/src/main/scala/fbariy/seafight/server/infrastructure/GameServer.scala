@@ -36,6 +36,7 @@ import org.http4s.server.middleware.Logger
 import org.http4s.server.{Router, Server}
 import pureconfig.ConfigSource
 import cats.implicits._
+import fbariy.seafight.server.application.canplay.CanPlayHandler
 import pureconfig.module.catseffect.syntax._
 
 import scala.concurrent.ExecutionContext.global
@@ -58,13 +59,14 @@ object GameServer {
       cfg        <- Resource.eval(config[F])
       transactor <- DBConfig.transactor(cfg.db, global)
 
-      bus      = new InMemoryNotificationBus[F]
-      gameRepo = new DoobieGameRepository[F](transactor)
+      bus       = new InMemoryNotificationBus[F]
+      gameRepo  = new DoobieGameRepository[F](transactor)
+      shipsRepo = new InMemoryShipsRepository[F]
 
       addShipsSemaphore <- Resource.eval(Semaphore[F](1))
       preparationHdlr = new AddShipsHandler[F](
-        new InMemoryShipsRepository[F],
-        new DoobieGameRepository[F](transactor),
+        shipsRepo,
+        gameRepo,
         new AddShipsValidator[F](gameRepo),
         bus,
         addShipsSemaphore
@@ -106,6 +108,7 @@ object GameServer {
                                                 acceptBackSemaphore)
 
       releaseNotificationsHdlr = new ReleaseNotificationsHandler[F](bus)
+      canPlayHdlr              = new CanPlayHandler[F](gameRepo, shipsRepo)
 
       preparationEndpoints   = new PreparationEndpoints[F]
       gameEndpoints          = new GameEndpoints[F]
@@ -116,7 +119,8 @@ object GameServer {
           preparationEndpoints.createInvite(createInviteHdlr) <+>
             withInvite(inviteRepo)(
               preparationEndpoints.addShips(preparationHdlr)) <+>
-            withInvite(inviteRepo)(preparationEndpoints.getInvite)
+            withInvite(inviteRepo)(preparationEndpoints.getInvite) <+>
+            withInvite(inviteRepo)(preparationEndpoints.canPlay(canPlayHdlr))
         ),
         "api/v1/game" -> (
           withGame(gameRepo)(gameEndpoints.canMakeMove(canMoveHdlr)) <+>

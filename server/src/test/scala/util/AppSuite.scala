@@ -5,10 +5,12 @@ import cats.data.{NonEmptyChain, ValidatedNec}
 import cats.effect.{IO, Resource, Sync, SyncIO}
 import cats.implicits._
 import com.dimafeng.testcontainers.munit.TestContainerForAll
-import fbariy.seafight.core.application.{AppErrorOutput, CreateInviteInput, InviteOutput}
+import fbariy.seafight.core.application.error.AppError
+import fbariy.seafight.core.application.error.instances._
+import fbariy.seafight.core.application.{CreateInviteInput, InviteOutput}
 import fbariy.seafight.core.domain.Player
-import fbariy.seafight.server.infrastructure.client.PlayerState
 import fbariy.seafight.core.infrastructure.SeafightClient
+import fbariy.seafight.server.infrastructure.client.PlayerState
 import munit.CatsEffectSuite
 
 trait AppSuite
@@ -20,7 +22,7 @@ trait AppSuite
 
   object ex {
     object suc {
-      def unapply[A](validated: ValidatedNec[AppErrorOutput, A]): Some[A] =
+      def unapply[A](validated: ValidatedNec[AppError, A]): Some[A] =
         validated match {
           case Valid(a)   => Some(a)
           case Invalid(e) => fail(s"Response must be valid. Cause: ${e.show}")
@@ -28,14 +30,13 @@ trait AppSuite
     }
 
     object errFirst {
-      def unapply[A](
-          validated: ValidatedNec[AppErrorOutput, A]): Some[AppErrorOutput] =
+      def unapply[A](validated: ValidatedNec[AppError, A]): Some[AppError] =
         Some(err.unapply(validated).value.head)
     }
 
     object err {
-      def unapply[A](validated: ValidatedNec[AppErrorOutput, A])
-        : Some[NonEmptyChain[AppErrorOutput]] =
+      def unapply[A](
+          validated: ValidatedNec[AppError, A]): Some[NonEmptyChain[AppError]] =
         validated match {
           case Valid(_)        => fail(s"Response must be invalid")
           case Invalid(errors) => Some(errors)
@@ -72,12 +73,14 @@ trait AppSuite
           case Right(states) => states
         }
 
-        ex.suc(invite) -> _ <- appClient.createInviteThrowable(
+        ex.suc(invite) <- appClient.createInvite(
           CreateInviteInput(Player("VooDooSh"), Player("twaryna")))
 
         _ <- (
-          appClient.addShipsThrowable(invite.id, Player("VooDooSh"))(p1State.ships),
-          appClient.addShipsThrowable(invite.id, Player("twaryna"))(p2State.ships),
+          appClient.addShips(invite.id, Player("VooDooSh"))(
+            p1State.ships),
+          appClient.addShips(invite.id, Player("twaryna"))(
+            p2State.ships),
         ).tupled
 
         _ <- combineThroughOne(

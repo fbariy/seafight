@@ -6,9 +6,7 @@ import fbariy.seafight.server.application.ship.{PlayerShips, ShipsRepository}
 import fbariy.seafight.core.domain.{Cell, Invite, Player}
 
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import scala.collection.concurrent.TrieMap
-import scala.jdk.CollectionConverters.ConcurrentMapHasAsScala
 
 class InMemoryShipsRepository[F[_]: Sync] extends ShipsRepository[F] {
   private val playersShips
@@ -44,5 +42,14 @@ class InMemoryShipsRepository[F[_]: Sync] extends ShipsRepository[F] {
         maybePairShips <- pairMaybeShips.tupled
         _              <- playersShips.remove(invite.id)
       } yield maybePairShips
+    }
+
+  override def has(inviteId: UUID, p: Player): F[Boolean] =
+    Sync[F].delay {
+      playersShips.get(inviteId).exists {
+        case (Some(PlayerShips(player, _)), _) if p == player => true
+        case (_, Some(PlayerShips(player, _))) if p == player => true
+        case _ => false
+      }
     }
 }

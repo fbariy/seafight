@@ -18,6 +18,7 @@ import fbariy.seafight.server.application.back.{
 }
 
 class GameEndpoints[F[_]: Concurrent] extends Http4sDsl[F] {
+  @deprecated("implements by notifications")
   def canMakeMove(
       handler: CanMakeMoveHandler[F]): AuthedRoutes[F[PlayerWithGame], F] =
     AuthedRoutes.of[F[PlayerWithGame], F] {
