@@ -13,10 +13,10 @@ val ScalaLoggingVersion     = "3.9.4"
 val TestContainersVersion   = "0.39.6"
 val ScalaMetaVersion        = "20.2.0"
 val EnumeratumCirceVersion  = "1.7.0"
-val KindProjectorVersion    = "0.13.2"
+val KindProjectorVersion    = "0.13.4"
 val BetterMonadicForVersion = "0.3.1"
 
-ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / scalaVersion := "2.13.17"
 
 lazy val runMigrate = taskKey[Unit]("Migrates the database schema.")
 
