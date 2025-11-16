@@ -6,3 +6,4 @@ project/project
 .cache
 .sbt
 .ivy2
+server/src/main/resources/META-INF
